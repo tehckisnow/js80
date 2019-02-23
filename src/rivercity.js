@@ -1,18 +1,4 @@
-////@ts-check
-
-//TODO:
-//walking jump, running jump, walking punch, running punch, walking kick, running kick
-//collision detection for both movement and damage
-//enemies
-//damage system
-//enemy AI
-//is init() even actually necessary?
-//sprite scaling
-//init() may not be necessary
-//seperate x/y of playerEntity from where sprite is drawn, so that jump is animated while keeping player's position consistent
-
 //settings
-
 settings.settings(
   {
     gameCanvasSize: {x:240,y:256}
@@ -20,12 +6,12 @@ settings.settings(
 );
 
 //import assets
-let sprite = new js80.assets.sprite("rivercity.png", 16);
-let bg = new js80.assets.sprite("riverbackground.png", 16);
-let healthUnit = new js80.assets.sprite("river health.png", 16);
+let sprite = new js80.assets.sprite("assets/rivercity.png", 16);
+let bg = new js80.assets.sprite("assets/riverbackground.png", 16);
+let healthUnit = new js80.assets.sprite("assets/river health.png", 16);
 
-let music1 = new js80.assets.audio("RCR Stage1.mp3");
-let punchSound = new js80.assets.audio("punch2.wav");
+let music1 = new js80.assets.audio("assets/RCR Stage1.mp3");
+let punchSound = new js80.assets.audio("assets/punch2.wav");
 
 function gravity(array){
   //pass in an array of objects to be affected by gravity
