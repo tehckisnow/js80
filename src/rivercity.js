@@ -152,11 +152,6 @@ function input(){
 //use ECS system: (must come before any calls to ecs)
 ecs.systems.manager.init();
 
-// let wall = ecs.systems.entities.create(0, 0, 0);
-// wall.addComponent.collision(wall.id, "rect", 249, 100);
-// let ground = ecs.systems.entities.create(0, 200);
-// ground.addComponent.collision(ground.id, "rect", 249, 200);
-
 let playerEntity = ecs.systems.entities.create(32, 125);
 playerEntity.addComponent.render(playerEntity.id, sprite, 1, 2, 2);
 playerEntity.addComponent.animation(
@@ -227,17 +222,4 @@ function frame(){
   ecs.systems.manager.update();
   js80.text("ALEX", 15, 25, "white", 14, "wintermute");
   drawHealth(playerEntity.stamina);
-
-  //debugging
-  js80.rect(0, 0, 249, 135, "rgba(100,0,0,0.8)");
-  js80.rect(0, 200, 249, 200, "rgba(100,0,0,0.8)");
-  js80.rect(100, 100, 50, 50, "rgba(100,0,0,0.8)");
-  js80.rect(playerEntity.x, playerEntity.y, playerEntity.width, playerEntity.height, "rgba(100,0,0,0.8)");
-  //js80.log(ecs.systems.collision.collisionEvents);
-  //if(ecs.systems.collision.collisionEvents.length > 0)js80.log("colliding");
-
-  let collArray = [];
-  let coll = ecs.systems.collision.collisionCheck(playerEntity.id);
-  for(i in coll){collArray.push(coll[i].id)};
-  js80.log(collArray);
 };
