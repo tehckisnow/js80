@@ -15,7 +15,94 @@
 ////      spr() //draw a sprite
 ////      drawLine()  //draw a line
 ////      btn() //returns true if passed key is currently pressed
+//--------------------------------
 // API:
+  //settings object
+  settings.settings(object);
+    pass an object containing any settings to be adjusted for this gamefile
+  
+  //engine object
+  engine
+    this object's methods are generally only called by the engine itself
+  engine.log()
+    prints messages from the engine to the log
+  
+  //js80 object
+  js80
+    these are the methods a developer will use to build a game
+    log()
+      print messages to the log
+    setTitle()
+      sets the title of the window
+    canvasSize()
+      sets the dimensions of the game area
+    reset()
+      reverts game to it's initial state (not yet implemented)
+    
+    //assets object
+    assets
+      this object contains methods for preparing game assets for use
+      sprite()
+        create a new html element and assign an image file and a tilesize
+      audio()
+        create a new html element and assign an audio file
+      map2d()
+        takes in a standard array and a rowlength and returns a 2d array
+      animation()
+        not yet implemented.  this might end up being handled by ecs
+    
+    //timer object
+    timer
+      this object contains methods for managing timer events
+      update()
+        decrements all timers.  Must call this in main game loop if using timers
+      new()
+        create a new timer
+      terminate()
+        terminate the indicated timer
+    
+    //common methods
+    music()
+      begin playing audio file.  can indicate to loop or stop playback
+    sfx()
+      play sound effect
+    spr() 
+      draw sprite to screen
+    line()
+      draw line to screen
+    rect()
+      draw filled rectangle to screen
+    rectb()
+      draw rectangle outline to screen
+    circ()
+      draw filled circle to screen
+    circb()
+      draw circle outline to screen
+    text()
+      draw text to screen
+    cls()
+      clear the screen.  pass a color to fill screen with that color
+    map()
+      pass a 2d map array and a tilesheet to draw the map to the screen
+    mget()
+      return tile number of passed x/y coordinate value
+    mset()
+      adjust what tile is displayed in a map by adjusting it's array
+    btn()
+      return true if indicated key is currently being pressed
+    btnp()
+      return true if indicated key was just pressed
+    click()
+      not yet implemented (triggers an event?)
+    mouse()
+      not yet implemented (returns mouse coordinates?)
+
+    //keyboard object
+    keyboard
+      this object manages input states.  You probably won't need to use this(except addKey()), but it is possible that methods like keyUp() might be useful
+      addKey()
+        adds a keyboard key to the list of inputs to watch
+  
 
 //TODO:
   //sprite scaling
@@ -62,6 +149,10 @@
 //each system's update() method iterates over only it's own components
 
 //todo:
+  //ecs physics system should have maxSpeed (how to do this?)
+  //render zOffset should control draw layer/level! (sort render components array before rendering?)
+  //ecs.collision tags (or should tags be their own component?)
+
   //create() functions should get entity id without it being passed in! (use class-based inheritance?)
   //collision tags
   //componentsToAdd argument in ecs.systems.entities.create() (faster way of creating entities)
@@ -86,6 +177,7 @@
 //Test Game (River City Ransom clone)
 
 //TODO:
+  //running still uses x-translation; update this to use physics once max-speed is incorporated into ecs
   //additional moves: walking jump, running jump, walking punch, running punch, walking kick, running kick
   //collision detection for both movement and damage (working on this in the ecs system first)
   //enemies
@@ -97,6 +189,16 @@
 
 //-------------------------------------------------------------------
 ChangeLog:
+
+  Saturday, March 9th:
+    rebuilt collision system
+    built physics system
+    incorporated sprite offsets in render component and collision offset in collision component
+    built entities.destroy()
+    input applies force instead of translating coordinates (physics translates instead)
+
+  Sunday, Feb 24th:
+    wrote draft of API documentation for engine
 
   Saturday, Feb 23rd:
     restructured project

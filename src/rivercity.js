@@ -13,23 +13,58 @@ let healthUnit = new js80.assets.sprite("assets/river health.png", 16);
 let music1 = new js80.assets.audio("assets/RCR Stage1.mp3");
 let punchSound = new js80.assets.audio("assets/punch2.wav");
 
-function gravity(array){
+//create forces
+function gravityForce(id){
   //pass in an array of objects to be affected by gravity
   let grav = 2;
-  for(i in array){
-    if(array[i].z > 0){
-      array[i].z -= grav;
-      array[i].y += grav;
-      array[i].ground = false;
-    }else {
-      array[i].ground = true;
-    }
-
+  let entity = ecs.systems.entities.find(id);
+  if(entity.z > 0){
+    entity.z -= grav;
+    entity.components.render.yOffset += grav;
+    entity.ground = false;
+  }else {
+    entity.ground = true;
   }
 };
+ecs.systems.physics.newForce("gravity", gravityForce);
+
+function inputForce(id){
+  let entity = ecs.systems.entities.find(id);
+  if(ecs.systems.collision.impendingCollisionCheck(id).length < 1){
+    //if(entity.components.physics.xForce < maxSpeed){
+    entity.x += entity.components.physics.xForce;
+    entity.y += entity.components.physics.yForce;
+    entity.z += entity.components.physics.zForce;
+  }
+    //xForce
+    if(entity.components.physics.xForce > 0){
+      entity.components.physics.xForce -= entity.components.physics.mass;
+      if(entity.components.physics.xForce < 0) entity.components.physics.xForce = 0;
+    }else{
+      entity.components.physics.xForce += entity.components.physics.mass;
+      if(entity.components.physics.xForce > 0) entity.components.physics.xForce = 0;
+    }
+    //yForce
+    if(entity.components.physics.yForce > 0){
+      entity.components.physics.yForce -= entity.components.physics.mass;
+      if(entity.components.physics.yForce < 0) entity.components.physics.yForce = 0;
+    }else{
+      entity.components.physics.yForce += entity.components.physics.mass;
+      if(entity.components.physics.yForce > 0) entity.components.physics.yForce = 0;
+    }
+    //zForce
+    if(entity.components.physics.zForce > 0){
+      entity.components.physics.zForce -= entity.components.physics.mass;
+      if(entity.components.physics.zForce < 0) entity.components.physics.zForce = 0;
+    }else{
+      entity.components.physics.zForce += entity.components.physics.mass;
+    if(entity.components.physics.zForce > 0) entity.components.physics.zForce = 0;
+    }
+};
+ecs.systems.physics.newForce("input", inputForce);
 
 let timeToTriggerRun = 20;
-
+//input
 function input(){
   //check for running
   if(js80.btnp("ArrowRight") || js80.btnp("d")){
@@ -56,24 +91,19 @@ function input(){
   if(js80.btn("ArrowRight") || js80.btn("d")){
       if(playerEntity.idle){
         playerEntity.components.render.flip = false;
-        //collision detection
-        if(ecs.systems.collision.collisionCheck(playerEntity.id).length <= 0 ){
-        //if(js80.mget(map1, player.x + 18, player.y + 40) < 0){
-        
-        playerEntity.components.animation.setAnimation("walk");
-        //check if running
-        if(playerEntity.running){
-          playerEntity.components.animation.setAnimation("run");
-          playerEntity.x += playerEntity.runSpeed;
-        }else
-        //if not, walk
-        playerEntity.x += playerEntity.speed;
-      }
+          playerEntity.components.animation.setAnimation("walk");
+          //check if running
+          if(playerEntity.running){
+            playerEntity.components.animation.setAnimation("run");
+            playerEntity.x += playerEntity.runSpeed;
+          }else
+          //if not, walk
+          playerEntity.components.physics.xForce += playerEntity.speed;
     }
   }
   if(js80.btn("ArrowLeft") || js80.btn("a")){
     if(playerEntity.idle){
-      //if(js80.mget(map1, player.x +14, player.y + 40) < 0){
+      //if(js80.mget(map1, player.x +14, player.y + 40) < 0){ //<- reminder about using mget for collisions
       playerEntity.components.render.flip = "x";
       playerEntity.components.animation.setAnimation("walk");
       //check if running
@@ -82,19 +112,19 @@ function input(){
         playerEntity.x -= playerEntity.runSpeed;
       }else
       //if not, walk
-      playerEntity.x -= playerEntity.speed;
+      playerEntity.components.physics.xForce -= playerEntity.speed;
     }
   }
   if((js80.btn("ArrowUp") || js80.btn("w")) ){//&& player.data.ground){
     if(playerEntity.idle){  
       playerEntity.components.animation.setAnimation("walk");
-      playerEntity.y -= playerEntity.vSpeed;
+      playerEntity.components.physics.yForce -= playerEntity.vSpeed;
     }
   }
   if(js80.btn("ArrowDown") || js80.btn("s")){
     if(playerEntity.idle){
       playerEntity.components.animation.setAnimation("walk");
-      playerEntity.y += playerEntity.vSpeed;
+      playerEntity.components.physics.yForce += playerEntity.vSpeed;
     }
   }
   //punch/kick
@@ -128,9 +158,8 @@ function input(){
   if(playerEntity.ground && ((js80.btn("z") && js80.btn("x")) || (js80.btn("q") && js80.btn("e")))){
     //if stationary jump, walking jump, and running jump
     playerEntity.components.animation.setAnimation("jump");
-    
     playerEntity.z += playerEntity.jump;
-    playerEntity.y -= playerEntity.jump; //change this!
+    playerEntity.components.render.yOffset -= playerEntity.jump;
   };
   //pausemenu
   if(js80.btnp("Enter")){
@@ -143,16 +172,15 @@ function input(){
       playerEntity.running = false;
   };
   }
-
-  // if(!(js80.btn("w")) && !(js80.btn("a")) && !(js80.btn("s")) && !(js80.btn("d")) &&!(js80.btn("ArrowUp")) && !(js80.btn("ArrowLeft")) && !(js80.btn("ArrowDown")) && !(js80.btn("ArrowRight")) && !(js80.btn("q")) && !(js80.btn("e")) && !(js80.btn("z")) && !(js80.btn("x"))){
-  //     playerEntity.components.animation.setAnimation("idle")
-  // };
 };
 
 //use ECS system: (must come before any calls to ecs)
 ecs.systems.manager.init();
 
+//create entities
+//player
 let playerEntity = ecs.systems.entities.create(32, 125);
+playerEntity.addComponent.physics(playerEntity.id, ["gravity", "input"], 1);
 playerEntity.addComponent.render(playerEntity.id, sprite, 1, 2, 2);
 playerEntity.addComponent.animation(
   playerEntity.id, 
@@ -166,9 +194,12 @@ playerEntity.addComponent.animation(
     punch: [7, 8, 9],
     kick: [10, 11, 12],
     hit: [13, 14, 15, 16]
-  }, 
-  "idle", 
+  },
+  //default animation
+  "idle",
+  //default framerate
   5);
+  //set up playerEntity properties
   playerEntity.z = 0;
   playerEntity.ground = true;
   playerEntity.jump = 30;
@@ -182,16 +213,25 @@ playerEntity.addComponent.animation(
   playerEntity.maxStamina = 50;
   playerEntity.width = 16;
   playerEntity.height = 32;
-  playerEntity.addComponent.collision(playerEntity.id, "rect", playerEntity.width, playerEntity.height);
+  playerEntity.addComponent.collision(playerEntity.id, "rect", playerEntity.width, 3, 0, playerEntity.height - 3);
 
-    let wall = ecs.systems.entities.create(0, 0, 0);
-    wall.addComponent.collision(wall.id, "rect", 249, 110);
-    let ground = ecs.systems.entities.create(0, 200);
-    ground.addComponent.collision(ground.id, "rect", 249, 200);
-    let block = ecs.systems.entities.create(100, 100, 0);
-    block.addComponent.collision(block.id, "rect", 50, 50);
+  //environment collisions
+  let wall = ecs.systems.entities.create(0,0);
+  wall.width = 240;
+  wall.height = 140;
+  wall.addComponent.collision(wall.id, "rect", wall.width, wall.height);
+  let floor = ecs.systems.entities.create(0,200);
+  floor.width = 240;
+  floor.height = 200;
+  floor.addComponent.collision(floor.id, "rect", floor.width, floor.height);
+  let leftWall = ecs.systems.entities.create(-10, 0);
+  leftWall.addComponent.collision(leftWall.id, "rect", 10, 256);
+
+  // this is super wrong
+  // let dude = ecs.systems.entities.create(50,100);
+  // dude.addComponent.render(wall.id, sprite, 1, 2, 2, "none", 0, 0, 0, 50);
   
-
+//UI
 function drawHealth(health){
   let horizontalPosition = 50;
   while(health > 0){
@@ -201,6 +241,7 @@ function drawHealth(health){
   }
 };
 
+//init
 function init(){
   engine.draw.imageSmoothingEnabled = false;
   js80.setTitle("River City Ransom");
@@ -208,18 +249,22 @@ function init(){
   js80.music(music1, true);
 };
 
+//main game loop
 function frame(){
   js80.timer.update();
-  gravity([playerEntity]);
   //handle input
   input();
   //update background
   js80.cls("black");
   js80.spr(bg, -1, 40);
 
-
   //update ECS system
   ecs.systems.manager.update();
+  //UI
   js80.text("ALEX", 15, 25, "white", 14, "wintermute");
   drawHealth(playerEntity.stamina);
+
+  // show collider highlights
+  // js80.rect(0, 0, wall.width, wall.height, "rgba(0,0,100,0.5");
+  // js80.rect(0, 200, floor.width, floor.height, "rgba(100,0,0,0.5");
 };
