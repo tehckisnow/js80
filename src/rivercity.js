@@ -7,6 +7,7 @@ settings.settings(
 
 //import assets
 let sprite = new js80.assets.sprite("assets/rivercity.png", 16);
+let sprite2 = new js80.assets.sprite("assets/rivercity2.png", 16);
 let bg = new js80.assets.sprite("assets/riverbackground.png", 16);
 let healthUnit = new js80.assets.sprite("assets/river health.png", 16);
 
@@ -15,16 +16,23 @@ let punchSound = new js80.assets.audio("assets/punch2.wav");
 
 //create forces
 function gravityForce(id){
-  //pass in an array of objects to be affected by gravity
   let grav = 2;
   let entity = ecs.systems.entities.find(id);
   if(entity.z > 0){
-    entity.z -= grav;
+    entity.components.physics.zForce -= grav;
+    //entity.z -= grav;
     entity.components.render.yOffset += grav;
     entity.ground = false;
+
   }else {
     entity.ground = true;
+    entity.z = 0;
+    //reset animation if player
+    if(entity.id === 0 && entity.canJumpAgain){
+      //playerEntity.components.animation.setAnimation("idle");
+    }
   }
+  entity.components.render.yOffset = -entity.z;
 };
 ecs.systems.physics.newForce("gravity", gravityForce);
 
@@ -60,6 +68,7 @@ function inputForce(id){
       entity.components.physics.zForce += entity.components.physics.mass;
     if(entity.components.physics.zForce > 0) entity.components.physics.zForce = 0;
     }
+    //if(entity.ground){entity.components.physics.zForce = 0;}
 };
 ecs.systems.physics.newForce("input", inputForce);
 
@@ -155,11 +164,15 @@ function input(){
     }
   }
   //jump
-  if(playerEntity.ground && ((js80.btn("z") && js80.btn("x")) || (js80.btn("q") && js80.btn("e")))){
+  if(playerEntity.ground && playerEntity.canJumpAgain && ((js80.btn("z") && js80.btn("x")) || (js80.btn("q") && js80.btn("e")))){
     //if stationary jump, walking jump, and running jump
     playerEntity.components.animation.setAnimation("jump");
-    playerEntity.z += playerEntity.jump;
-    playerEntity.components.render.yOffset -= playerEntity.jump;
+
+    //playerEntity.z += playerEntity.jump;
+    playerEntity.components.physics.zForce += playerEntity.jump;
+    //playerEntity.components.render.yOffset -= playerEntity.jump;
+    playerEntity.canJumpAgain = false;
+    js80.timer.new(30, function(){playerEntity.canJumpAgain = true;});
   };
   //pausemenu
   if(js80.btnp("Enter")){
@@ -202,7 +215,7 @@ playerEntity.addComponent.animation(
   //set up playerEntity properties
   playerEntity.z = 0;
   playerEntity.ground = true;
-  playerEntity.jump = 30;
+  playerEntity.jump = 15;
   playerEntity.speed = 1;
   playerEntity.vSpeed = 0.5;
   playerEntity.idle = true;
@@ -213,6 +226,7 @@ playerEntity.addComponent.animation(
   playerEntity.maxStamina = 50;
   playerEntity.width = 16;
   playerEntity.height = 32;
+  playerEntity.canJumpAgain = true;
   playerEntity.addComponent.collision(playerEntity.id, "rect", playerEntity.width, 3, 0, playerEntity.height - 3);
 
   //environment collisions
@@ -226,6 +240,43 @@ playerEntity.addComponent.animation(
   floor.addComponent.collision(floor.id, "rect", floor.width, floor.height);
   let leftWall = ecs.systems.entities.create(-10, 0);
   leftWall.addComponent.collision(leftWall.id, "rect", 10, 256);
+
+  //enemy1
+  // let enemy1 = ecs.systems.entities.create(100, 150);
+  // enemy1.addComponent.physics(enemy1.id, ["gravity", "input"], 1);
+  // enemy1.addComponent.render(enemy1.id, sprite2, 1, 2, 2, "none", 0, 0, 0, 0);
+  // enemy1.addComponent.animation(
+  //   enemy1.id, 
+  //   {//anims
+  //     idle: [1],
+  //     walk: [0, 0, 1, 1, 2, 2],
+  //     jump: [3],
+  //     land: [4],
+  //     block: [5],
+  //     run: [0, 1, 2, 6],
+  //     punch: [7, 8, 9],
+  //     kick: [10, 11, 12],
+  //     hit: [13, 14, 15, 16]
+  //   },
+  //   //default animation
+  //   "idle",
+  //   //default framerate
+  //   5);
+  //   enemy1.z = 0;
+  //   enemy1.ground = true;
+  //   enemy1.jump = 15;
+  //   enemy1.speed = 1;
+  //   enemy1.vSpeed = 0.5;
+  //   enemy1.idle = true;
+  //   enemy1.runCheck = false;
+  //   enemy1.running = false;
+  //   enemy1.runSpeed = 3;
+  //   enemy1.stamina = 50;
+  //   enemy1.maxStamina = 50;
+  //   enemy1.width = 16;
+  //   enemy1.height = 32;
+  //   enemy1.canJumpAgain = true;
+  //   enemy1.addComponent.collision(enemy1.id, "rect", enemy1.width, 3, 0, enemy1.height - 3);
 
   // this is super wrong
   // let dude = ecs.systems.entities.create(50,100);
@@ -267,4 +318,8 @@ function frame(){
   // show collider highlights
   // js80.rect(0, 0, wall.width, wall.height, "rgba(0,0,100,0.5");
   // js80.rect(0, 200, floor.width, floor.height, "rgba(100,0,0,0.5");
+
+  console.log("");
+  console.log("z " + playerEntity.z);
+  console.log("yOffset " + playerEntity.components.render.yOffset);
 };

@@ -125,7 +125,7 @@ let js80 = {
     sprite: function(file, tilesize){
       let newSprite = document.createElement("img");
       newSprite.setAttribute("src", file);
-      newSprite.tileSize = tilesize || defaultTileSize;
+      newSprite.tileSize = tilesize || settings.defaultTileSize;
       return newSprite;
     },
     //create audio asset
@@ -363,7 +363,7 @@ let js80 = {
     engine.draw.beginPath();
     let x = 0;
     let y = 0;
-    let numberOfRows = tilesheet.naturalWidth / tilesize;
+    let numberOfRows = tilesheet.naturalWidth / tilesize || tilesheet.tilesize;
     let currentRow;
     let currentTile;
     for(row in map){
@@ -381,6 +381,7 @@ let js80 = {
 
   //returns tile id of given x,y map coordinate
   mget: function(map, x, y, tileSize){
+    tileSize = map.tileSize;
     if(tileSize === undefined) tileSize = settings.defaultTileSize;
     let x2 = Math.floor(x / tileSize);
     let y2 = Math.floor(y / tileSize);
