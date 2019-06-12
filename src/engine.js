@@ -35,6 +35,8 @@ let engine = {
   bezel: {},
   bezel2: {},
   buildGame: function(){
+    //insert function to pull settings here?
+
     engine.gameCanvas = document.createElement("canvas");
     engine.gameCanvas.setAttribute("width", settings.gameCanvasSize.x);
     engine.gameCanvas.setAttribute("height", settings.gameCanvasSize.y);
@@ -43,13 +45,13 @@ let engine = {
     engine.gameCanvas.style.border = "solid black";
     document.body.insertBefore(engine.gameCanvas, document.body.childNodes[0]);
     engine.draw = engine.gameCanvas.getContext("2d");
-    if(settings.renderBezel) engine.buildBezel();
+    if(settings.renderBezel){engine.buildBezel()};
     engine.title = document.createElement("title");
     document.head.appendChild(engine.title);
     engine.title.text = settings.defaultWindowTitle;
     document.body.setAttribute("onkeypress", "engine.start()");//this lets you press a key at boot screen
     document.body.setAttribute("onclick", "engine.start()");
-    document.body.setAttribute("onload", "defaultTitle()");
+    //document.body.setAttribute("onload", "defaultTitle()");
     engine.bootScreen();
   },
   buildBezel: function(){
@@ -85,7 +87,7 @@ let engine = {
   start: function(){
     engine.log("start()");
     js80.keyboard.setup();
-    document.body.removeAttribute("onkeypress"); //this lets you press a key at boot
+    document.body.removeAttribute("onkeypress"); //this let you press a key at boot
     init();
     setInterval(frame, settings.frameInterval);
     document.body.removeAttribute("onclick");
@@ -232,34 +234,39 @@ let js80 = {
 
   //drawing
 
-  //draw rotated sprite (this is a test only and will be removed)
-  rSpr: function(image, x, y, angle){
-    //add support for cropping
-    //merge into spr() tree with additional flag
-      engine.draw.save();
-      engine.draw.beginPath();
-      engine.draw.translate(x + (image.width / 2), y + (image.height / 2));
-      engine.draw.rotate(angle * Math.PI / 180);
-      engine.draw.drawImage(image, 0, 0, image.width, image.height, -(image.width / 2), -(image.height / 2), image.width, image.height);
-      engine.draw.restore();
-  },
-
-  testSpr: function(id, x, y, optional){
-    let frame, w, h, rot;
-    if(optional.frame){frame = frame;}else frame = 0;
-    if(optional.w){w = w;}else w = id.width / id.tileSize;
-    if(optional.h){h = h;}else h = id.height / id.tileSize;
-    if(optional.rot){rot = rot;}else rot = 0;
+  newSpr: function(id, x, y, scale, flip, rotate, frame, w, h){
+    //example: js80.spr(char1, 200, 148, 1, "x", 90, 0, 2, 2);
     let sprite = frame * id.tileSize;
+    x = x || 0;
+    y = y || 0;
+    w = w || 1;
+    h = h || 1;
+    scale = scale || 1;
+    flip = flip || 0;
+    rotate = rotate || 0;
+    frame = frame || 0;
+    //save context
+    engine.draw.save();
+    engine.draw.beginPath();
+    
+    //flip
+    let flipX = 1;
+    let flipY = 1;
+    if(flip === "x"){flipX = -1}else if(flip === "y"){flipY = -1};
+    engine.draw.scale(1 * flipX * scale, 1 * flipY * scale);
+    x = x * flipX - ((id.tileSize * w) / w);
+    y = y * flipY - ((id.tileSize * h) / h);
 
-    if(rot !== 0){
-      engine.draw.save();
-      engine.draw.beginPath();
+    //rotation
+    if(rotate !== 0){
       engine.draw.translate(x + (id.width / 2), y + (id.height / 2));
-      engine.draw.rotate(rot * Math.PI / 180);
-    }
+      engine.draw.rotate(rotate * Math.PI / 180);
+    };
+
+    //draw image
     engine.draw.drawImage(id, sprite * w, 0, w * id.tileSize, h * id.tileSize, x, y, w * id.tileSize, h * id.tileSize);
-    if(rot !== 0) engine.draw.restore();
+    //restore context
+    engine.draw.restore();
   },
 
   //draw a sprite to the screen
@@ -359,10 +366,10 @@ let js80 = {
   },
 
   //draw tilesheet to screen based on tilemap
-  map: function(map, tilesheet, tilesize){
+  map: function(map, tilesheet, tilesize, xOffset, yOffset){
     engine.draw.beginPath();
-    let x = 0;
-    let y = 0;
+    x = xOffset || 0;
+    y = yOffset || 0;
     let numberOfRows = tilesheet.naturalWidth / tilesize || tilesheet.tilesize;
     let currentRow;
     let currentTile;
@@ -374,7 +381,7 @@ let js80 = {
         engine.draw.drawImage(tilesheet, currentTile * tilesize, currentRow * tilesize, tilesize, tilesize, x * tilesize, y * tilesize, tilesize, tilesize);
         x++;
       }
-      x = 0;
+      x = xOffset;
       y++;
     }
   },
