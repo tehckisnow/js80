@@ -121,6 +121,365 @@ let js80 = {
   //reset to initial game state
   reset: function(){},
 
+  //event system
+  events: {
+    //hold all active threads here
+    threads: [],
+    nextThreadId: 0,
+    //thread pseudo-constructor
+    newThread: function(persistent){
+      let newThread = {};
+      newThread.id = js80.events.nextThreadId++;
+      newThread.queue = [];
+      newThread.persistent = persistent || false;
+      //event pseudo-constructor
+      newThread.new = function(passedAction){
+        let newEvent = {};
+        newEvent.action = function(){
+          passedAction();
+        };
+        //put event in queue
+        newThread.queue.push(newEvent);
+      };
+      //common event types here for easy creation
+      newThread.common = {
+        wait: function(time){
+          while(time > 0){
+            newThread.new(function(){});
+            time--;
+          };
+        },//common.wait()
+      };//newThread.common
+      js80.events.threads.push(newThread);
+      return newThread;
+    },//newThread()
+
+    update: function(){
+      if(js80.events.threads.length > 0){
+        for(i in js80.events.threads){
+          if(js80.events.threads[i].queue.length > 0){
+            js80.events.threads[i].queue[0].action();
+            js80.events.threads[i].queue.shift();
+          }else{
+            //delete empty threads
+            if(!js80.events.threads[i].persistent){
+              js80.events.threads.splice(js80.events.threads[i], 1);
+            };
+          };
+      };
+      };
+    }, //update()
+
+  },//events
+
+  //textbox manager
+  textbox: {
+    activeTextboxes: [],
+    themes: {
+      //used if no theme is defined
+      default: {
+        name: "default",
+        x: 0, y: 0,
+        width: 200, height: 200,
+        bgColor: "blue", bgImage: "",
+        border: true, borderColor: "white",
+        font: "ariel", fontSize: "14", fontColor: "white", lines: 4, 
+        text: "", charLength: 30,
+        vertOffset: 0, horOffset: 20,
+        handleOverflow: true, overflowIcon: "", overflowIconOffset: {x: 20, y: 15},
+        //overflowIconOffset is from lower right corner, not upper left
+        //overflowIcon should be an asset created by js80.assets.sprite
+      },
+      //used if no theme is set and gameDefault is defined. overrides default
+      gameDefault: {},
+    },
+    newTheme: function(themeSettings){
+      let newTheme = {};
+      //defaults
+      for(i in js80.textbox.themes.default){
+        newTheme[i] = js80.textbox.themes.default;
+      }
+      //customize
+      for(i in themeSettings){
+        newTheme[i] = themeSettings[i];
+      };
+      js80.textbox.themes[newTheme.name] = newTheme;
+      return newTheme;
+    },
+    //a persistent way to manage textboxes
+    newController: function(){
+      let newControl = {};
+      //tracks textbox state. read by input
+      newControl.on = false;
+      //holds reference to current textbox
+      newControl.tbox = {};
+      //creates a textbox and passes text/theming to it
+      newControl.write = function(text, theme, options){
+        if(newControl.on){
+          newControl.advance()
+        }else{
+          if(options){
+            newControl.tbox = js80.textbox.new(text, theme, options);
+          }else if(theme){
+            newControl.tbox = js80.textbox.new(text, theme);
+          }else if(text){
+            newControl.tbox = js80.textbox.new(text);
+          }else{
+            newControl.tbox = js80.textbox.new("");
+          };
+          newControl.on = true;
+        };
+      };
+      //if there is overflow, advances textbox.  if not, removes it
+      newControl.advance = function(){
+        if(newControl.tbox.overflow !== "" && newControl.tbox.overflow !== " "){
+          newControl.tbox.advance();
+        }else{
+          newControl.tbox.remove();
+          newControl.on = false;
+        };
+      };
+      return newControl;
+    },
+    //new textbox
+    new: function(text, theme, themeMods){
+      let newTextbox = {};
+      //set theme
+      function setTheme(theme){
+        newTextbox.theme = theme;
+        Object.assign(newTextbox, theme);
+      };
+      //if a theme is passed in, set it
+      if(theme && theme !== "default"){
+        setTheme(theme);
+      }else{
+        //check if gameDefault defined
+        if(js80.textbox.themes.gameDefault !== {}){
+          setTheme(js80.textbox.themes.gameDefault);
+        }else
+        //use default as last resort
+        setTheme(js80.textbox.themes.default);
+      };
+      //overrides theme
+      if(themeMods){
+        Object.assign(newTextbox, themeMods);
+      };
+      //assign text
+      if(text){newTextbox.text = text};
+      
+      newTextbox.overflow = "";
+      newTextbox.advance = function(){
+        this.text = this.overflow;
+        this.overflow = "";
+      };
+      newTextbox.remove = function(){
+        let i = js80.textbox.activeTextboxes.indexOf(newTextbox);
+        js80.textbox.activeTextboxes.splice(i, 1);
+      };
+      js80.textbox.activeTextboxes.push(newTextbox);
+      return newTextbox;
+    },
+    remove: function(toRemove){
+      //by index
+      let index = toRemove;
+      js80.textbox.activeTextboxes.splice(index, 1);
+    },
+    drawTextBox: function(textbox){
+      //draw box
+      js80.rect(textbox.x, textbox.y, textbox.width, textbox.height, textbox.bgColor);
+      if(textbox.border){js80.rectb(textbox.x, textbox.y, textbox.width, textbox.height, textbox.borderColor)};
+      //arrange text
+        //break up into lines
+          //tokenize based on spaces
+          //add each token while incrementing a counter based on token's length
+          //before adding each token, compare the counter to the line length
+          //if greater, start on next line
+          //store next batch of string for next page
+      //!add support for problems, like one long unbroken string
+      //!consider a different method other than split()
+      //check for newline characters
+      //!this does not yet work
+      //textbox.text = textbox.text.replace(/\/n/g, " /n ");
+      let tokens = textbox.text.split(" ");
+      let charsInLine = 0;
+      let lines = [];
+      //prevent undefined when blank text
+      let c = 0;
+      while(c <= textbox.lines){
+        lines[c] = "";
+        c++;
+      };
+      let currentLine = 0;
+      for(i in tokens){//add check tokens[i] < textbox.charLength
+        //check for newline; " /n "
+        if(tokens[i] === "/n"){
+          charsInLine = 0;
+          currentLine++;
+          charsInLine += tokens[i].length + 1;
+        }else
+        //if no newline
+        if(charsInLine + tokens[i].length <= textbox.charLength){
+          charsInLine += tokens[i].length + 1;
+          lines[currentLine] += tokens[i] + " ";
+        }else{
+          charsInLine = 0;
+          currentLine++;
+          charsInLine += tokens[i].length + 1;
+          lines[currentLine] += tokens[i] + " ";
+        };
+      };
+      //split based on current page
+      let currentText = lines.splice(0, textbox.lines - 1);
+      //save lines[] for next page
+      //!find a way to do this without using toString()?
+      //textbox.overflow = lines.toString();
+      textbox.overflow = lines.join(" ");
+      //determine position of lines
+
+      //!There should probably be more than one way of doing this
+      let vertOffset = textbox.height / textbox.lines;
+      //add starting vertOffset?
+      let horOffset = textbox.theme.horOffset;
+      let textPosition = textbox.theme.vertOffset;
+      //save position data
+      textbox.vertOffset = vertOffset;
+      textbox.horOffset = horOffset;//this can be grabbed from theme instead
+      textbox.textPosition = textPosition;//this can be grabbed from theme instead
+      //draw lines of text
+      for(i in currentText){
+        textPosition += vertOffset;
+        js80.text(currentText[i], textbox.x + horOffset, textbox.y + textPosition, textbox.fontColor, textbox.fontSize, textbox.font);
+      };
+
+      //if there is overflow
+      if(textbox.theme.handleOverflow){
+        if(textbox.overflow.length > 1 || textbox.overflow[0].length > 1){
+          //draw overflow icon
+          if(textbox.theme.overflowIcon === ""){
+            js80.textbox.overflowIcon(textbox.theme.width - textbox.theme.overflowIconOffset.x, textbox.theme.height - textbox.theme.overflowIconOffset.y, 1);
+          
+          }else{
+            spr(textbox.theme.overflowIcon, textbox.theme.overflowIconOffset.x, textbox.theme.overflowIconOffset.y);
+          };
+        };
+      };
+    },
+    //update- put call to this into game loop
+    drawAll(){
+      for(i in js80.textbox.activeTextboxes){
+        js80.textbox.drawTextBox(js80.textbox.activeTextboxes[i]);
+      };
+    },
+    overflowIcon: function(x, y, scale){
+      scale = scale || 1;
+      js80.line(x, y, x + 10 * scale, y, "white");
+      js80.line(x + 10 * scale, y, x + 5 * scale, y + 7 * scale, "white");
+      js80.line(x + 5 * scale, y + 7 * scale, x, y, "white");
+    },
+  },//textbox
+
+  //menu
+  //  textbox
+  //  choices
+  //  effects
+  //  indicator
+  //controller
+  menu: {
+    menus: [],
+    nextId: 0,
+    new: function(title, choices, effects, options){
+      let newMenu = {};
+      newMenu.id = js80.menu.nextId++;
+      //defaults
+      newMenu.currentOption = 0;
+      newMenu.layout = "vertical";
+      newMenu.title = title || "";
+      newMenu.choices = choices;
+      newMenu.effects = effects;
+      newMenu.options = {prependChoices: "    ", theme: js80.textbox.themes.default};
+      if(js80.textbox.themes.gameDefault){newMenu.options.theme = js80.textbox.themes.gameDefault};
+      for(i in options){
+        newMenu.options[i] = options[i];
+      }
+      newMenu.indicator = {};//!
+      newMenu.moveDown = function(){js80.menu.controller.move(newMenu, "down")};
+      newMenu.moveUp = function(){js80.menu.controller.move(newMenu, "up")};
+      newMenu.select = function(){js80.menu.controller.select(newMenu)};
+      newMenu.cancel = function(){js80.menu.controller.close(newMenu)};
+      newMenu.drawIndicator = function(){js80.menu.controller.draw(newMenu)};
+
+      js80.menu.menus.push(newMenu);
+      js80.menu.build(newMenu);
+      return newMenu;
+    },
+    build: function(menu){
+      let text = menu.title;
+      let titleSpace = 0;
+      if(menu.title !== ""){
+        titleSpace = 1;
+        text += " /n ";
+      };
+      //save titlespace for use in menu.draw()
+      menu.titleSpace = titleSpace;
+      let rows = menu.choices.length + titleSpace;
+      for(i in menu.choices){
+        if(menu.options.prependChoices !== ""){
+          text+= menu.options.prependChoices;
+        };
+        text += menu.choices[i];
+        if(i < menu.choices.length - 1){
+          text += " /n ";
+        };
+      };
+      menu.textbox = js80.textbox.new(text, menu.options.theme);
+    },
+    destroy: function(menuId){
+      let id = js80.menu.menus.findIndex(function(e){return e.id === menuId});
+      js80.menu.menus.splice(id, 1);
+    },
+    drawIndicator: function(x, y, scale){
+      scale = scale || 1;
+      js80.line(x, y, x + 10 * scale, y + ((10 * scale) / 2), "#9bbc0f");
+      js80.line(x + 10 * scale, y + ((10 * scale) / 2), x, y + 10 * scale, "#9bbc0f");
+      js80.line(x, y + 10 * scale, x, y, "#9bbc0f");
+    },
+    controller: {
+      move: function(menu, dir){
+        if(dir === "down"){
+          if(menu.currentOption < menu.choices.length -1){
+            menu.currentOption++;
+          }
+        }else if(dir === "up"){
+          if(menu.currentOption > 0){
+            menu.currentOption--;
+          }
+        };
+      },
+      select: function(menu){
+        menu.effects[menu.currentOption]();
+      },
+      close: function(menu){
+        menu.textbox.remove();
+        js80.menu.destroy(menu.id);
+      },
+      draw: function(menu){
+        let textbox = menu.textbox;
+        js80.menu.drawIndicator(
+          textbox.x + textbox.horOffset, 
+          textbox.y + (menu.titleSpace * textbox.vertOffset) + (menu.currentOption * textbox.vertOffset), 1); //!something is off here
+      },
+    },
+    drawAll: function(){
+      for(i in js80.menu.menus){
+        let curmenu = js80.menu.menus[i];
+        //js80.menu.build(js80.menu.menus[i]);
+        //js80.menu.drawIndicator(0, 0, 1);
+        //!older menus will have their indicator drawn over top layer!
+        curmenu.drawIndicator();
+      }
+    },
+},
+
   //asset manager (create asset references)
   assets: {
     //create 2d asset
@@ -158,6 +517,40 @@ let js80 = {
         }
         newArray.push(row);
         return newArray;
+    },
+    //process map file:
+    //  export map from Tiled as json file
+    //  add "let mapData = " in front of the json in that file
+    //  rename file from .json to .js
+    //  import in to html file
+    //  pass mapData in to a call to js80.assets.processMap();
+    processMap: function(mapData, assetDirectory){
+      let map = {
+        assetDirectory: assetDirectory || "",
+        width: mapData.width,
+        height: mapData.height,
+        tileSize: mapData.tilewidth,
+        tileWidth: mapData.tilewidth,
+        tileHeight: mapData.tileheight,
+        numberOfLayers: mapData.layers.length,
+        image: mapData.tilesets[0].image, //add support for multiple tilesets here?
+        layers: {},
+      };
+      for(i in mapData.layers){
+        map.layers[mapData.layers[i].name] = {name: mapData.layers[i].name, id: mapData.layers[i].id, width: mapData.layers[i].width, data: mapData.layers[i].data};
+        //map.layers.push({name: mapData.layers[i].name, id: mapData.layers[i].id, width: mapData.layers[i].width, data: mapData.layers[i].data});
+      };
+      //decrement all numbers in map array so that they match tile id numbers
+      for(i in map.layers){
+        for(u in map.layers[i].data){
+          map.layers[i].data[u]--;
+        };
+      };
+      //convert data to 2d arrays
+      for(i in map.layers){
+        map.layers[i].data = js80.assets.map2d(map.layers[i].data, map.layers[i].width);
+      }
+      return map;
     },
     animation: function(name, sprite, framesArray){},
   },
@@ -234,39 +627,34 @@ let js80 = {
 
   //drawing
 
-  newSpr: function(id, x, y, scale, flip, rotate, frame, w, h){
-    //example: js80.spr(char1, 200, 148, 1, "x", 90, 0, 2, 2);
+  //draw rotated sprite (this is a test only and will be removed)
+  rSpr: function(image, x, y, angle){
+    //add support for cropping
+    //merge into spr() tree with additional flag
+      engine.draw.save();
+      engine.draw.beginPath();
+      engine.draw.translate(x + (image.width / 2), y + (image.height / 2));
+      engine.draw.rotate(angle * Math.PI / 180);
+      engine.draw.drawImage(image, 0, 0, image.width, image.height, -(image.width / 2), -(image.height / 2), image.width, image.height);
+      engine.draw.restore();
+  },
+
+  testSpr: function(id, x, y, optional){
+    let frame, w, h, rot;
+    if(optional.frame){frame = frame;}else frame = 0;
+    if(optional.w){w = w;}else w = id.width / id.tileSize;
+    if(optional.h){h = h;}else h = id.height / id.tileSize;
+    if(optional.rot){rot = rot;}else rot = 0;
     let sprite = frame * id.tileSize;
-    x = x || 0;
-    y = y || 0;
-    w = w || 1;
-    h = h || 1;
-    scale = scale || 1;
-    flip = flip || 0;
-    rotate = rotate || 0;
-    frame = frame || 0;
-    //save context
-    engine.draw.save();
-    engine.draw.beginPath();
-    
-    //flip
-    let flipX = 1;
-    let flipY = 1;
-    if(flip === "x"){flipX = -1}else if(flip === "y"){flipY = -1};
-    engine.draw.scale(1 * flipX * scale, 1 * flipY * scale);
-    x = x * flipX - ((id.tileSize * w) / w);
-    y = y * flipY - ((id.tileSize * h) / h);
 
-    //rotation
-    if(rotate !== 0){
+    if(rot !== 0){
+      engine.draw.save();
+      engine.draw.beginPath();
       engine.draw.translate(x + (id.width / 2), y + (id.height / 2));
-      engine.draw.rotate(rotate * Math.PI / 180);
-    };
-
-    //draw image
+      engine.draw.rotate(rot * Math.PI / 180);
+    }
     engine.draw.drawImage(id, sprite * w, 0, w * id.tileSize, h * id.tileSize, x, y, w * id.tileSize, h * id.tileSize);
-    //restore context
-    engine.draw.restore();
+    if(rot !== 0) engine.draw.restore();
   },
 
   //draw a sprite to the screen

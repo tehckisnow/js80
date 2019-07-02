@@ -320,7 +320,7 @@ function init(){
 
 
 
-ecs.systems.manager.init();
+//ecs.systems.manager.init();
 
 let anotherPlayer = new ecs.systems.entity.create(10,20,0);
 console.log(anotherPlayer);

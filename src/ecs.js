@@ -1,384 +1,206 @@
-//ecs system
 let ecs = {
-  nextId: 0,
-  entities: [],
-  components: [],
-  systems: {
-    manager: {
-      //build components list in ecs.components
-      init: function(){
-        for(i in ecs.systems){
-          if(ecs.systems[i].type){
-            ecs.components[ecs.systems[i].type] = [];
-            ecs.systems.manager.add[ecs.systems[i].type] = ecs.systems[i].create;
-          }
-        }
-      },
-      add: {},//this holds reference to each systems' create() method (ecs.systems.manager.add.render() )
-      activeSystems: [],//all systems with an active component are listed here
-      update: function(){//call all active systems
-        //clear active systems
-        ecs.systems.manager.activeSystems = [];
-        //populate list of active systems
-        for(i in ecs.components){
-          if(ecs.components[i].length > 0){
-            ecs.systems.manager.activeSystems.push(ecs.components[i][0].type);
-          }
-        }
-        //call all active systems
-        for(i in ecs.systems.manager.activeSystems){
-          let toRender = false;
-          if(ecs.systems.manager.activeSystems[i] === "render"){
-            toRender = true;
-          }else {
-            ecs.systems[ecs.systems.manager.activeSystems[i]].update();
-          }
-          //call render last
-          if(toRender){
-            ecs.systems.render.update();
-          }
-        }
-      },
-      //return component
-      find: function(componentType, id){
-        for(i in ecs.components){
-          if(ecs.components[i].type === componentType && ecs.components[i].id === id){
-            return ecs.components[i];
-          }
-        }
-      },
-    },//manager
-
-    entities: {
-      type: "entities",
-      init: function(){},//set up the system
-      create: function(x, y, z){
-        let newEntity = {};
-        newEntity.id = ecs.nextId++;
-        newEntity.x = x || 0;
-        newEntity.y = y || 0;
-        newEntity.z = z || 0;
-        newEntity.components = [],
-        newEntity.addComponent = ecs.systems.manager.add;
-        ecs.entities.push(newEntity);
-        return newEntity;
-      },
-      //destroy an instance of an entity
-      destroy: function(id){
-        //destroy entity
-        let index = ecs.entities.findIndex(function(e){return e.id === id});
-        ecs.entities.splice(index, 1);
-        //destroy components
-        function notThis(element){ //rename this you lazy schmuck
-          return element.id !== id;
-        };
-        for(i in ecs.components){
-          ecs.components[i] = ecs.components[i].filter(notThis);
-        }
-      },
-      //return entity
-      find: function(id){
-        for(i in ecs.entities){
-          if(ecs.entities[i].id === id){
-            return ecs.entities[i];
-          }
-        }
-      },
-      //iterate over all of this system's components
-      update: function(){},
-    },//entities
-
-    render: {
-      type: "render", 
-      init: function(){},
-      //create new render component
-      create: function(id, sprite, frame, width, height, flip, rotation, xOffset, yOffset, zOffset){
-        let newComponent = {};
-        newComponent.type = "render";
-        newComponent.id = id;
-        newComponent.sprite = sprite;
-        newComponent.frame = frame || 0;
-        newComponent.width = width || 1;
-        newComponent.height = height || 1;
-        newComponent.flip = flip || "none"; //what default value?
-        newComponent.rotation = rotation || 0;
-        newComponent.xOffset = xOffset || 0;
-        newComponent.yOffset = yOffset || 0;
-        newComponent.zOffset = zOffset || 0;
-        ecs.components.render.push(newComponent);
-        ecs.systems.entities.find(id).components.render = ecs.systems.render.find(id);
-      },
-      //destroy an instance of a render component
-      destroy: function(id){},
-      //return render component
-      find: function(id){
-        for(i in ecs.components.render){
-          if(ecs.components.render[i].id === id){
-            return ecs.components.render[i];
-          }
-        }
-      },
-      //draw all entities with render components to screen
-      update: function(){
-        //order components on zOffset
-        ecs.components.render.sort(function(a, b){return a.zOffset-b.zOffset});
-        //render entities
-        for(i in ecs.components.render){
-          js80.spr(
-            ecs.components.render[i].sprite, 
-            ecs.systems.entities.find(ecs.components.render[i].id).x + ecs.components.render[i].xOffset, 
-            ecs.systems.entities.find(ecs.components.render[i].id).y + ecs.components.render[i].yOffset, 
-            ecs.components.render[i].frame, 
-            ecs.components.render[i].width, 
-            ecs.components.render[i].height, 
-            ecs.components.render[i].flip
-            //add rotation support here?
-          );
-        }
-      },
-    },//render
-
-    animation: {
-      type: "animation",
-      init: function(){},
-      //create a new animation component
-      create: function(id, anims, defaultAnim, defaultFrameRate){
-        let newComponent = {};
-        newComponent.type = "animation";
-        newComponent.id = id;
-        newComponent.anims = anims;
-        newComponent.defaultAnim = defaultAnim;
-        newComponent.frameRate = defaultFrameRate;
-        newComponent.currentAnim = defaultAnim;
-        newComponent.currentFrame = 0;
-        newComponent.timerToNextFrame = defaultFrameRate;
-        newComponent.loop = true;
-        newComponent.setAnimation = function(anim){ //this isn't really necessary
-          //this.currentAnim = anim;
-          let a = ecs.systems.entities.find(id);
-          a.components.animation.currentAnim = anim;
-          a.components.animation.loop = true;
-        },
-        //immediately switch animation 
-        //this can be called right after a call to setAnimation, or instead of if the new animation is passed in
-        newComponent.interrupt = function(anim){
-          //find component
-          let a = ecs.systems.entities.find(id);
-          if(anim){a.components.animation.currentAnim = anim};
-          a.components.animation.currentFrame = a.components.animation.anims[a.components.animation.currentAnim][0];
-          ecs.systems.entities.find(a.id).components.render.frame = a.components.animation.currentFrame;
-          a.components.animation.timerToNextFrame = -1;
-        };
-        newComponent.setLoop = function(anim){
-          let a = ecs.systems.entities.find(id);
-          if(anim){a.components.animation.currentAnim = anim;
-            a.components.animation.currentFrame = 0;//a.components.animation.anims[a.components.animation.currentAnim][0];
-            a.components.render.frame = a.components.animation.currentFrame;
-          };
-          a.components.animation.loop = true;
-        };
-        newComponent.setNoLoop = function(anim){
-          let entity = ecs.systems.entities.find(id);
-          if(anim){entity.components.animation.currentAnim = anim;
-            entity.components.animation.currentFrame = 0;//entity.components.animation.anims[entity.components.animation.currentAnim][0];
-            entity.components.render.frame = entity.components.animation.currentFrame;
-          };
-          entity.components.animation.loop = false;
-        };
-        ecs.components.animation.push(newComponent);
-        ecs.systems.entities.find(id).components.animation = ecs.systems.animation.find(id);
-      },
-      //remove an animation component
-      destroy: function(){},
-      //return animation component
-      find: function(id){
-        for(i in ecs.components.animation){
-          if(ecs.components.animation[i].id === id){
-            return ecs.components.animation[i];
-          }
-        }
-      },
-      //main animation method
-      update: function(){
-        for(i in ecs.components.animation){
-          let a = ecs.components.animation[i];
-          a.timerToNextFrame--;
-          if(a.timerToNextFrame < 0){
-            a.timerToNextFrame = a.frameRate;
-            a.currentFrame++;
-            if(a.currentFrame > a.anims[a.currentAnim].length - 1){
-              a.currentFrame = 0;
-              if(a.loop){
-                //do nothing
-              }else {
-                a.currentAnim = a.defaultAnim;
-              }
-            }
-            //set render frame to current animation frame
-            ecs.systems.entities.find(a.id).components.render.frame = a.anims[a.currentAnim][a.currentFrame];
-          }
-        }
-      },
-    },//animation
-
-    collision: {
-      type: "collision", 
-      init: function(){},
-      //create new collision component
-      create: function(id, shape, widthOrRadius, height, xOffset, yOffset, tags){
-        let newComponent = {};
-        newComponent.type = "collision";
-        newComponent.id = id;
-        newComponent.shape = shape || "rect";
-        if(shape === "circ"){
-          newComponent.radius = widthOrRadius;
-        }else if(shape === "rect"){
-          newComponent.width = widthOrRadius;
-          newComponent.height = height;
-        };
-        newComponent.xOffset = xOffset || 0;
-        newComponent.yOffset = yOffset || 0;
-        newComponent.tags = tags; //these are not yet implemented
-        ecs.components.collision.push(newComponent);
-        ecs.systems.entities.find(id).components.collision = ecs.systems.collision.find(id);
-      },
-      //destroy an instance of a collision component
-      destroy: function(id){},
-      //return collision component
-      find: function(id){
-        for(i in ecs.components.collision){
-          if(ecs.components.collision[i].id === id){
-            return ecs.components.collision[i];
-          }
-        }
-      },
-      //holds all current collisions
-      collisionEvents: [],
-      //takes id and returns an array of objects colliding with it according to collision.collisionEvents
-      collisionCheck: function(id){
-        let collisions = [];
-        for(i in ecs.systems.collision.collisionEvents){
-          if(ecs.systems.collision.collisionEvents[i].a.id === id){
-            collisions.push(ecs.systems.collision.collisionEvents[i].b);
-          }
-        }
-        return collisions;
-      },
-      //return true if entities a and b overlap
-      check: function(a, b, xM, yM){
-        if(a.id !== b.id){
-          let xMove = xM || 0;
-          let yMove = yM || 0; 
-          if (a.x + a.components.collision.xOffset + xMove < b.x + b.components.collision.xOffset + b.components.collision.width &&
-            a.x + a.components.collision.xOffset + xMove + a.components.collision.width > b.x + b.components.collision.xOffset &&
-            a.y + a.components.collision.yOffset + yMove < b.y + b.components.collision.yOffset + b.components.collision.height &&
-            a.y + a.components.collision.yOffset + yMove + a.components.collision.height > b.y + b.components.collision.yOffset ) {
-              // collision detected
-              return true;
-          }
-        }else return false;
-      },
-      //returns an array of all entities currently overlapping entity of passed id
-      impendingCollisionCheck: function(id){
-        let collisions = [];
-        let entityA = ecs.systems.entities.find(id);
-        for(i in ecs.components.collision){
-          let entityB = ecs.systems.entities.find(ecs.components.collision[i].id);
-            if(ecs.systems.collision.check(entityA, entityB, entityA.components.physics.xForce, entityA.components.physics.yForce)){
-              collisions.push(entityB);
-            }
-        }
-        return collisions;
-      },
-      //compare all entities with a collision component and fill collisionEvents with reports
-      update: function(){
-        //clear collisionEvents
-        ecs.systems.collision.collisionEvents = [];
-        for(i in ecs.components.collision){
-          //compare each collision component to each other one
-          let objectA = ecs.systems.entities.find(ecs.components.collision[i].id);
-          for(u in ecs.components.collision){
-            let objectB = ecs.systems.entities.find(ecs.components.collision[u].id);
-            //do not compare an object to itself
-            if(objectA !== objectB){
-              //detect collisions and add them to list
-              if(objectA.x + objectA.components.collision.xOffset < objectB.x + objectB.components.collision.xOffset + objectB.components.collision.width &&
-                objectA.x + objectA.components.collision.xOffset + objectA.components.collision.width > objectB.x + objectB.components.collision.xOffset &&
-                objectA.y + objectA.components.collision.yOffset < objectB.y + objectB.components.collision.yOffset + objectB.components.collision.height &&
-                objectA.y + objectA.components.collision.yOffset + objectA.components.collision.height > objectB.y + objectB.components.collision.yOffset ){
-              //replace this with collision.check()? (having both is redundant)
-
-                  //this code is not yet used.  Am considering another solution
-                  //determine side(s) and append to object
-                  let horizontal = "";
-                  let vertical = "";
-                  if(objectA.x + (objectA.width / 2) > objectB.x + (objectB.width / 2)){
-                    horizontal = "right";
-                  }else{
-                    horizontal = "left";
-                  }
-                  if(objectA.y + (objectA.y / 2) > objectB.y + (objectB.height / 2)){
-                    vertical = "bottom";
-                  }else{
-                    vertical = "top";
-                  }
-                  ecs.systems.collision.collisionEvents.push({a: objectA, b: objectB, horizontal: horizontal, vertical: vertical});
-                }
-            }
-          }
-        }
-        //iterate over list of collisions
-
-      }//update
-    },//collision
-
-    physics: { //acts on entities x/y/z based on forces and (potentially)collisions
-      type: "physics", 
-      init: function(){},
-      //create new physics component
-      create: function(id, forces, mass){
-        let newComponent = {};
-        newComponent.type = "physics";
-        newComponent.id = id;
-        newComponent.forces = forces || [];
-        newComponent.mass = mass || 1;
-        newComponent.xForce = 0;
-        newComponent.yForce = 0;
-        newComponent.zForce = 0;
-        ecs.components.physics.push(newComponent);
-        ecs.systems.entities.find(id).components.physics = ecs.systems.physics.find(id);
-      },
-      destroy: function(id){},
-      //return physics component
-      find: function(id){
-        for(i in ecs.components.physics){
-          if(ecs.components.physics[i].id === id){
-            return ecs.components.physics[i];
-          }
-        }
-      },
-      //array for holding all active forces
-      forces: [],
-      //create a new force and add to the forces list to be iterated over every frame
-      newForce: function(name, effect){
-        let newForce = {};
-        newForce.name = name;
-        newForce.effect = effect;
-        ecs.systems.physics.forces.push(newForce);
-      },
-      update: function(){
-        for(i in ecs.systems.physics.forces){
-          for(e in ecs.components.physics){
-            if(ecs.components.physics[e].forces.includes(ecs.systems.physics.forces[i].name)){
-              ecs.systems.physics.forces[i].effect(ecs.components.physics[e].id);
-            }
-          }
-        }
-      },
-    },//physics 
-
-    input: {},//input //execute tasks/events based on input
-    events: {},//events //acts on entities based on queued events/triggers
-    behaviors: {},//behaviors //acts on entities based on scripted behaviors (ai)
+  update: function(){
+    //ecs.collision.update(); //no need for this?
+    ecs.animation.update();
+    ecs.render.update();
   },
-};
+  collision: {
+    //list of collidable entities
+    collidables: [],
+    //optional list of collidable tiles
+    collidableTiles: [],
+    //add an array of numbers to collidableTiles
+    addCollidableTiles: function(tiles){
+      for(i in tiles){
+        ecs.collision.collidableTiles.push(tiles[i]);
+      };
+    },
+    //returns true if tile is in collidableTiles list
+    collideTile: function(map, entity, xMove, yMove){
+      //where to get map.tileSize?
+      let tile = js80.mget(map, entity.x + (xMove || 0), entity.y + (yMove || 0), map.tileSize || 16);
+      if(ecs.collision.collidableTiles[0].includes(tile)){ //!why do I need the [0] after collidableTiles? fix this! it is probably a problem with addCollidableTiles()
+        return true;
+      }else{
+        return false;
+      };
+    },
+    //create a new collision component with entity.collision = collision.new(args);
+    new: function(height, width, xOffset, yOffset, tags){
+      let defaultTile = 16;//pull this from elsewhere
+      let newCollision = {};
+      //parent//?
+      newCollision.height = height || defaultTile;
+      newCollision.width = width || defaultTile;
+      newCollision.xOffset = xOffset || 0;
+      newCollision.yOffset = yOffset || 0;
+      newCollision.tags = tags || [];
+      ecs.collision.collidables.push(newCollision);
+      return newCollision;
+    },
+    find: function(){},
+    //remove an entity from the collidables list
+    destroy: function(entity){},//!!
+    //compare positions of two objects with collision components
+    checkOverlap: function(a, b, xMove, yMove){
+      let xm = xMove || 0;
+      let ym = yMove || 0;
+      //!change these to -xm and -ym?
+      if(a.x + a.collision.xOffset + xm <= b.x + b.collision.xOffset + b.collision.width &&
+        a.x + a.collision.xOffset + xm + a.collision.width >= b.x + b.collision.xOffset &&
+        a.y + a.collision.yOffset + ym <= b.y + b.collision.yOffset + b.collision.height &&
+        a.y + a.collision.yOffset + ym + a.collision.height >= b.y + b.collision.yOffset){
+          return true;
+        };
+      return false;
+    },//checkOverlap()
+    //return an array of entities from collidables array that are overlapping with entity and have the optional tags
+    checkCollision: function(entity, xMove, yMove, tags){
+      let collisions = [];
+      let include = false;
+      for(i in ecs.collision.collidables){
+        if(ecs.collision.collidables[i].parent !== entity){
+          if(ecs.collision.checkOverlap(entity, ecs.collision.collidables[i].parent, xMove, yMove)){
+            if(tags){
+              for(u in tags){
+                if(ecs.collision.collidables[i].tags.includes(tags[u])){
+                  include = true;
+                };
+              };
+            }else{include = true};
+          };
+          if(include){
+            collisions.push(ecs.collision.collidables[i].parent);
+            include = false;
+          };
+        };
+      };
+      if(collisions.length > 0){
+        return collisions;
+      }else return false;
+    },//checkCollision()
+    update: function(){},
+  },//collision
+
+  render: {
+    toRender: [],
+    new: function(spriteSheet, xOff, yOff, sprite){
+      let newRender = {};
+      newRender.spriteSheet = spriteSheet;
+      newRender.xOffset = xOff || 0;
+      newRender.yOffset = yOff || 0;
+      newRender.sprite = sprite || 0;
+      newRender.draw = function(){
+        js80.spr(newRender.spriteSheet, newRender.parent.x, newRender.parent.y, newRender.sprite);
+      };
+      ecs.render.toRender.push(newRender);
+      return newRender;
+    },
+    find: function(id){
+      return ecs.entity.entities.findIndex(function(i){return i.id = id})
+    },
+    destroy: function(id){
+      ecs.render.toRender.splice(ecs.render.find(id), 1);
+    },
+    useCamera: false,
+    update: function(){
+      //first sort render.toRender by parent z-value
+      ecs.render.toRender = ecs.render.toRender.sort(function(a, b){return a.parent.z - b.parent.z}); //add support for z-offset
+      for(i in ecs.render.toRender){
+        //finish this
+        if(ecs.render.useCamera){
+          //convert global to screen coordinates 
+          let screen = camera.getScreen(ecs.render.toRender[i].parent.x + ecs.render.toRender[i].xOffset, ecs.render.toRender[i].parent.y + ecs.render.toRender[i].yOffset);
+          let screenX = screen[0];
+          let screenY = screen[1];
+          js80.spr(ecs.render.toRender[i].spriteSheet, screenX, screenY, ecs.render.toRender[i].sprite);
+        }else{
+          js80.spr(ecs.render.toRender[i].spriteSheet, ecs.render.toRender[i].parent.x + ecs.render.toRender[i].xOffset, ecs.render.toRender[i].parent.y + ecs.render.toRender[i].yOffset, ecs.render.toRender[i].sprite);
+        };
+      };
+    },
+  },
+
+  animation: {
+    toAnimate: [],
+    new: function(anims, frameRate, defaultAnim, startingAnim){
+      let newAnimation = {};
+      newAnimation.anims = anims || {};
+      newAnimation.default = defaultAnim || "default";
+      newAnimation.anims.default = [newAnimation.anims[newAnimation.default]] || [0];
+      newAnimation.currentAnim = startingAnim || defaultAnim || "default";
+      newAnimation.frame = 0;
+      newAnimation.frameRate = frameRate || 20;
+      newAnimation.animTimer = frameRate || 20;
+      newAnimation.setAnim = function(anim){
+        if(newAnimation.currentAnim !== anim){
+          newAnimation.currentAnim = anim;
+          newAnimation.frame = 0;
+          newAnimation.parent.render.sprite = newAnimation.anims[newAnimation.currentAnim][newAnimation.frame];
+        };
+      };
+      newAnimation.animate = function(){
+        newAnimation.animTimer--;
+        if(newAnimation.animTimer < 0){
+          newAnimation.animTimer = newAnimation.frameRate;
+          newAnimation.frame++;
+          if(newAnimation.frame > newAnimation.anims[newAnimation.currentAnim].length -1){
+            newAnimation.frame = 0;
+          };
+          newAnimation.parent.render.sprite = newAnimation.anims[newAnimation.currentAnim][newAnimation.frame];
+        };
+      };
+      ecs.animation.toAnimate.push(newAnimation);
+      return newAnimation;
+    },
+    update: function(){
+      for(i in ecs.animation.toAnimate){
+        ecs.animation.toAnimate[i].animate();
+      }
+    },
+  },
+
+  entity: {
+    entities: [],
+    nextId: 0,
+    new: function(x, y, z){
+      let newEntity = {};
+      newEntity.id = ecs.entity.nextId++;
+      newEntity.x = x || 0;
+      newEntity.y = y || 0;
+      newEntity.z = z || 0;
+      newEntity.add = {
+        collision: function(h, w, x, y, t){
+          newEntity.collision = ecs.collision.new(h, w, x, y, t);
+          newEntity.collision.id = newEntity.id;
+          newEntity.collision.parent = newEntity;
+        },
+        render: function(spriteSheet, xOff, yOff, sprite){
+          newEntity.render = ecs.render.new(spriteSheet, xOff, yOff, sprite);
+          newEntity.render.id = newEntity.id;
+          newEntity.render.parent = newEntity;
+        },
+        animation: function(anims, frameRate, defaultAnim, startingAnim){
+          newEntity.animation = ecs.animation.new(anims, frameRate, defaultAnim, startingAnim);
+          newEntity.animation.id = newEntity.id;
+          newEntity.animation.parent = newEntity;
+        },
+      };
+      newEntity.destroy = function(){
+        //iterate through systems and destroy all components before destroying self//!
+      };
+      ecs.entity.entities.push(newEntity);
+      return newEntity;
+    },
+    find: function(id){//return index of entity.entities
+      return ecs.entity.entities.findIndex(function(i){return i.id = id})
+    },
+    findEntity: function(id){//return entity
+      return ecs.entity.entities.find(function(i){return i.id = id})
+    },
+    destroy: function(id){
+      ecs.entity.entities.splice(ecs.entity.entities.find(id), 1);
+      //iterate through system lists to remove components//!
+    },
+  },
+}

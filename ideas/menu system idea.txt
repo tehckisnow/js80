@@ -1,0 +1,72 @@
+
+
+menu
+	x, y, z
+	width, height
+	text
+	background
+	border
+	indicator
+	choices
+		text
+		effect
+		position(x, y) (relative to menu)
+		style(background, font, color)
+
+
+let mainmenu = new menu("what is your choice?", 330, 100, );
+mainmenu.addChoice("new", function(){game.newGame()}, {x: 20, y: 20}, {bg: "black", border: "white"});
+mainmenu.addChoice("load", function(){});
+mainmenu.addChoice("exit", function(){});
+
+mainmenu.show();
+mainmenu.down();
+mainmenu.select();
+mainmenu.hide();
+
+js80:
+	menu:
+		menus: [],
+		new: function(){},
+		destroy: function(){},
+		build: function(){},
+
+
+persistent threads and thread autodeletion
+
+
+
+---------------
+Map
+	image or tilesheet
+	mapdata(array)
+	tilesize
+	layers
+		tilesheet
+		mapdata
+
+sprite
+	image or spritesheet
+	spritedata
+		tilesize
+		animations?(no)
+
+asset = object
+	contains resource and data
+
+--------------------
+Camera
+x: 100
+y: 100
+upperleft_x: 0
+upperleft_y: 0
+xOffset: -100
+yOffset: -100
+
+render
+	sprx = 5, 5
+	
+	sprx - (camera.x + xOffset)
+
+camera.x = 250
+map.x = 0

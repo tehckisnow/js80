@@ -6,13 +6,13 @@ settings.settings(
 );
 
 //import assets
-let sprite = new js80.assets.sprite("assets/rivercity.png", 16);
-let sprite2 = new js80.assets.sprite("assets/rivercity2.png", 16);
-let bg = new js80.assets.sprite("assets/riverbackground.png", 16);
-let healthUnit = new js80.assets.sprite("assets/river health.png", 16);
+let sprite = new js80.assets.sprite("src/assets/rivercity/rivercity.png", 16);
+let sprite2 = new js80.assets.sprite("src/assets/rivercity/rivercity2.png", 16);
+let bg = new js80.assets.sprite("src/assets/rivercity/riverbackground.png", 16);
+let healthUnit = new js80.assets.sprite("src/assets/rivercity/river health.png", 16);
 
-let music1 = new js80.assets.audio("assets/RCR Stage1.mp3");
-let punchSound = new js80.assets.audio("assets/punch2.wav");
+let music1 = new js80.assets.audio("src/assets/rivercity/RCR Stage1.mp3");
+let punchSound = new js80.assets.audio("src/assets/rivercity/punch2.wav");
 
 //create forces
 function gravityForce(id){
@@ -34,7 +34,7 @@ function gravityForce(id){
   }
   entity.components.render.yOffset = -entity.z;
 };
-ecs.systems.physics.newForce("gravity", gravityForce);
+//ecs.systems.physics.newForce("gravity", gravityForce);
 
 function inputForce(id){
   let entity = ecs.systems.entities.find(id);
@@ -70,7 +70,7 @@ function inputForce(id){
     }
     //if(entity.ground){entity.components.physics.zForce = 0;}
 };
-ecs.systems.physics.newForce("input", inputForce);
+//ecs.systems.physics.newForce("input", inputForce);
 
 let timeToTriggerRun = 20;
 //input
@@ -188,58 +188,58 @@ function input(){
 };
 
 //use ECS system: (must come before any calls to ecs)
-ecs.systems.manager.init();
+//ecs.systems.manager.init();
 
 //create entities
 //player
-let playerEntity = ecs.systems.entities.create(32, 125);
-playerEntity.addComponent.physics(playerEntity.id, ["gravity", "input"], 1);
-playerEntity.addComponent.render(playerEntity.id, sprite, 1, 2, 2);
-playerEntity.addComponent.animation(
-  playerEntity.id, 
-  {//anims
-    idle: [1],
-    walk: [0, 0, 1, 1, 2, 2],
-    jump: [3],
-    land: [4],
-    block: [5],
-    run: [0, 1, 2, 6],
-    punch: [7, 8, 9],
-    kick: [10, 11, 12],
-    hit: [13, 14, 15, 16]
-  },
-  //default animation
-  "idle",
-  //default framerate
-  5);
-  //set up playerEntity properties
-  playerEntity.z = 0;
-  playerEntity.ground = true;
-  playerEntity.jump = 15;
-  playerEntity.speed = 1;
-  playerEntity.vSpeed = 0.5;
-  playerEntity.idle = true;
-  playerEntity.runCheck = false;
-  playerEntity.running = false;
-  playerEntity.runSpeed = 3;
-  playerEntity.stamina = 50;
-  playerEntity.maxStamina = 50;
-  playerEntity.width = 16;
-  playerEntity.height = 32;
-  playerEntity.canJumpAgain = true;
-  playerEntity.addComponent.collision(playerEntity.id, "rect", playerEntity.width, 3, 0, playerEntity.height - 3);
+let playerEntity = {x:32, y:125};//ecs.systems.entities.create(32, 125);
+//playerEntity.physics(playerEntity.id, ["gravity", "input"], 1);
+//playerEntity.render(playerEntity.id, sprite, 1, 2, 2);
+// playerEntity.animation(
+//   playerEntity.id, 
+//   {//anims
+//     idle: [1],
+//     walk: [0, 0, 1, 1, 2, 2],
+//     jump: [3],
+//     land: [4],
+//     block: [5],
+//     run: [0, 1, 2, 6],
+//     punch: [7, 8, 9],
+//     kick: [10, 11, 12],
+//     hit: [13, 14, 15, 16]
+//   },
+//   //default animation
+//   "idle",
+//   //default framerate
+//   5);
+//   //set up playerEntity properties
+//   playerEntity.z = 0;
+//   playerEntity.ground = true;
+//   playerEntity.jump = 15;
+//   playerEntity.speed = 1;
+//   playerEntity.vSpeed = 0.5;
+//   playerEntity.idle = true;
+//   playerEntity.runCheck = false;
+//   playerEntity.running = false;
+//   playerEntity.runSpeed = 3;
+//   playerEntity.stamina = 50;
+//   playerEntity.maxStamina = 50;
+//   playerEntity.width = 16;
+//   playerEntity.height = 32;
+//   playerEntity.canJumpAgain = true;
+//   playerEntity.addComponent.collision(playerEntity.id, "rect", playerEntity.width, 3, 0, playerEntity.height - 3);
 
   //environment collisions
-  let wall = ecs.systems.entities.create(0,0);
-  wall.width = 240;
-  wall.height = 140;
-  wall.addComponent.collision(wall.id, "rect", wall.width, wall.height);
-  let floor = ecs.systems.entities.create(0,200);
-  floor.width = 240;
-  floor.height = 200;
-  floor.addComponent.collision(floor.id, "rect", floor.width, floor.height);
-  let leftWall = ecs.systems.entities.create(-10, 0);
-  leftWall.addComponent.collision(leftWall.id, "rect", 10, 256);
+  // let wall = ecs.systems.entities.create(0,0);
+  // wall.width = 240;
+  // wall.height = 140;
+  // wall.addComponent.collision(wall.id, "rect", wall.width, wall.height);
+  // let floor = ecs.systems.entities.create(0,200);
+  // floor.width = 240;
+  // floor.height = 200;
+  // floor.addComponent.collision(floor.id, "rect", floor.width, floor.height);
+  // let leftWall = ecs.systems.entities.create(-10, 0);
+  // leftWall.addComponent.collision(leftWall.id, "rect", 10, 256);
 
   //enemy1
   // let enemy1 = ecs.systems.entities.create(100, 150);
@@ -310,7 +310,7 @@ function frame(){
   js80.spr(bg, -1, 40);
 
   //update ECS system
-  ecs.systems.manager.update();
+  //ecs.systems.manager.update();
   //UI
   js80.text("ALEX", 15, 25, "white", 14, "wintermute");
   drawHealth(playerEntity.stamina);
