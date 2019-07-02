@@ -352,7 +352,7 @@ camera.init();
 
 let defaultAnims = {default: [0], idle: [0,0,1,1,0,0,2,2], idleSouth: [0], idleEast: [3], idleWest: [6], idleNorth: [9], walkLeft: [6,7,6,8], walkRight: [3,4,3,5], walkUp: [9,10,9,11], walkDown: [0,1,0,2]};
 
-let player1 = ecs.entity.new(10 * 16, 20 * 16, 20);
+let player1 = ecs.entity.new(528, 352, 20);
 player1.add.render(sprPlayer);
 player1.add.collision(14, 11, 3, 2, ["player", "physical"]);
 player1.facing = "south";
@@ -368,6 +368,14 @@ camera.yOffset = -player1.position.y;
 let npc2 = npcGenerator.new(sprNpc, 320, 352, defaultAnims, ["Hello, brave adventurer!", "cough cough", " /n /n woah."], function(){if(!npc2.variables.done){npc2.variables.done = true; console.log("success!")}});
 npc2.animation.setAnim("idle");
 interactions.new(npc2, function(){npc2.behavior.talk(npc2, player1, "Aloha!")});
+
+let npc3 = npcGenerator.new(sprNpc3, 609, 411, defaultAnims, ["AAAAAAAAAAAHHHH!!!", "AAAAAAAAAAAHHHH!!!"], function(){});
+npc3.facing = "west";
+npc3.animation.setAnim("walkLeft");
+interactions.new(npc3, function(){npc3.behavior.talk(npc3, player1, "Aloha!")});
+
+let npc = npcGenerator.new(sprNpc2, 400, 406, defaultAnims, ["Hey, there!", "Wait, how did you get here?"], function(){});
+interactions.new(npc, function(){npc.behavior.talk(npc, player1, "Aloha!")});
 
 let textController = js80.textbox.newController();
 interactions.new({x: 46 * 16, y: 23 * 16,}, function(){textController.write("Road Closed.")});
@@ -403,4 +411,6 @@ function frame(){
 
   js80.textbox.drawAll();
   js80.menu.drawAll();
+
+  console.log(player1.x, player1.y);
 };
