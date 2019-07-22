@@ -121,6 +121,30 @@ let js80 = {
   //reset to initial game state
   reset: function(){},
 
+  //save system:
+  save: {
+    saveData: {},
+    empty: {}, //used for 'deleting' savedata
+    settings: {},
+    //set up what data is to be saved in settings
+    init: function(dataToSave){
+      js80.save.settings = dataToSave;
+    },
+    save: function(name){
+      for(i in js80.save.settings){
+        js80.save.saveData[i] = js80.save.settings[i]; //! this gets the data that was saved instead of the current version!
+      };
+      localStorage.setItem(name, JSON.stringify(js80.save.saveData));
+    },
+    load: function(name){
+      js80.save.saveData = JSON.parse(localStorage.getItem(name));
+    },
+    delete: function(name){
+      localStorage.setItem(name, JSON.stringify(js80.save.empty));
+      js80.save.saveData = js80.save.empty;
+    },
+  },
+
   //event system
   events: {
     //hold all active threads here
@@ -466,17 +490,14 @@ let js80 = {
         let textbox = menu.textbox;
         js80.menu.drawIndicator(
           textbox.x + textbox.horOffset, 
-          textbox.y + (menu.titleSpace * textbox.vertOffset) + (menu.currentOption * textbox.vertOffset), 1); //!something is off here
+          textbox.y + (menu.titleSpace * textbox.vertOffset) + ((menu.currentOption) * textbox.vertOffset) + 15, 1); //!something is off here (15 is arbitrary)
       },
     },
     drawAll: function(){
-      for(i in js80.menu.menus){
-        let curmenu = js80.menu.menus[i];
-        //js80.menu.build(js80.menu.menus[i]);
-        //js80.menu.drawIndicator(0, 0, 1);
-        //!older menus will have their indicator drawn over top layer!
-        curmenu.drawIndicator();
-      }
+      //only draw indicator of top menu
+      if(js80.menu.menus.length > 0){
+      js80.menu.menus[js80.menu.menus.length - 1].drawIndicator();
+      };
     },
 },
 
@@ -627,18 +648,6 @@ let js80 = {
 
   //drawing
 
-  //draw rotated sprite (this is a test only and will be removed)
-  rSpr: function(image, x, y, angle){
-    //add support for cropping
-    //merge into spr() tree with additional flag
-      engine.draw.save();
-      engine.draw.beginPath();
-      engine.draw.translate(x + (image.width / 2), y + (image.height / 2));
-      engine.draw.rotate(angle * Math.PI / 180);
-      engine.draw.drawImage(image, 0, 0, image.width, image.height, -(image.width / 2), -(image.height / 2), image.width, image.height);
-      engine.draw.restore();
-  },
-
   testSpr: function(id, x, y, optional){
     let frame, w, h, rot;
     if(optional.frame){frame = frame;}else frame = 0;
@@ -658,14 +667,18 @@ let js80 = {
   },
 
   //draw a sprite to the screen
-  spr: function(id, x, y, frame, w, h, flip){
+  spr: function(id, x, y, frame, w, h, flip, rotation){
     //spr(id, x, y); //spr(id, x, y, frame); //spr(id, x, y, frame, w, h);
-    //flip takes "x" or "y" to indicate axis to flip
+    //flip takes "x", "y", or "xy" to indicate axis to flip
     if(frame === undefined){
       engine.draw.drawImage(id, x, y);
     }else{
       let sprite = frame * id.tileSize;
-      if(w === undefined){w = 1; h = 1};
+      w = w || 1;
+      h = h || 1;
+
+      //save canvas state
+      engine.draw.save();
 
       function flipSprite(){
         if(flip === "x"){
@@ -674,16 +687,28 @@ let js80 = {
         }else if(flip === "y"){
           engine.draw.scale(1, -1);
           y = -y - ((id.tileSize * h) / h); //this isn't quite right
-        }
-      }
+        }else if(flip === "xy"){
+          engine.draw.scale(-1, -1);
+        };
+      };
       //flip if necessary
       if(flip){flipSprite()};
 
+      //! TEST THIS!
+      //rotate sprite if necessary
+      if(rotation){
+        engine.draw.translate(x + (image.width / 2), y + (image.height / 2));
+        engine.draw.rotate(angle * Math.PI / 180);
+      };
+
+      engine.draw.beginPath();
       engine.draw.drawImage(id, sprite * w, 0, w * id.tileSize, h * id.tileSize, x, y, w * id.tileSize, h * id.tileSize);
       //this assumes single-row sprite sheet for now - change that later
       
       //revert if flipped
       if(flip){flipSprite()};
+
+      engine.draw.restore();
     }
   },
 

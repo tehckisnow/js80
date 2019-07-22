@@ -82,17 +82,21 @@ let ecs = {
     update: function(){},
   },//collision
 
-  render: {
+  render: { //remember to check contructor in entity.add!
     toRender: [],
-    new: function(spriteSheet, xOff, yOff, sprite){
+    new: function(spriteSheet, xOff, yOff, sprite, spriteWidth, spriteHeight, flip, rotation){
       let newRender = {};
       newRender.spriteSheet = spriteSheet;
       newRender.xOffset = xOff || 0;
       newRender.yOffset = yOff || 0;
-      newRender.sprite = sprite || 0;
-      newRender.draw = function(){
-        js80.spr(newRender.spriteSheet, newRender.parent.x, newRender.parent.y, newRender.sprite);
-      };
+      newRender.sprite = sprite || 0; //!set this to default sprite
+      newRender.spriteWidth = spriteWidth || 1;
+      newRender.spriteHeight = spriteHeight || 1;
+      newRender.flip = flip || 0;
+      newRender.rotation = rotation || 0;
+      // newRender.draw = function(){
+      //   js80.spr(newRender.spriteSheet, newRender.parent.x, newRender.parent.y, newRender.sprite, newRender.spriteWidth, newRender.spriteHeight, newRender.flip, newRender.rotation);
+      // };
       ecs.render.toRender.push(newRender);
       return newRender;
     },
@@ -113,9 +117,9 @@ let ecs = {
           let screen = camera.getScreen(ecs.render.toRender[i].parent.x + ecs.render.toRender[i].xOffset, ecs.render.toRender[i].parent.y + ecs.render.toRender[i].yOffset);
           let screenX = screen[0];
           let screenY = screen[1];
-          js80.spr(ecs.render.toRender[i].spriteSheet, screenX, screenY, ecs.render.toRender[i].sprite);
+          js80.spr(ecs.render.toRender[i].spriteSheet, screenX, screenY, ecs.render.toRender[i].sprite, ecs.render.toRender[i].spriteWidth, ecs.render.toRender[i].spriteHeight, ecs.render.toRender[i].flip, ecs.render.toRender[i].rotation);
         }else{
-          js80.spr(ecs.render.toRender[i].spriteSheet, ecs.render.toRender[i].parent.x + ecs.render.toRender[i].xOffset, ecs.render.toRender[i].parent.y + ecs.render.toRender[i].yOffset, ecs.render.toRender[i].sprite);
+          js80.spr(ecs.render.toRender[i].spriteSheet, ecs.render.toRender[i].parent.x + ecs.render.toRender[i].xOffset, ecs.render.toRender[i].parent.y + ecs.render.toRender[i].yOffset, ecs.render.toRender[i].sprite, ecs.render.toRender[i].spriteWidth, ecs.render.toRender[i].spriteHeight, ecs.render.toRender[i].flip, ecs.render.toRender[i].rotation);
         };
       };
     },
@@ -175,8 +179,8 @@ let ecs = {
           newEntity.collision.id = newEntity.id;
           newEntity.collision.parent = newEntity;
         },
-        render: function(spriteSheet, xOff, yOff, sprite){
-          newEntity.render = ecs.render.new(spriteSheet, xOff, yOff, sprite);
+        render: function(spriteSheet, xOff, yOff, sprite, height, width, flip, rotate){
+          newEntity.render = ecs.render.new(spriteSheet, xOff, yOff, sprite, height, width, flip, rotate);
           newEntity.render.id = newEntity.id;
           newEntity.render.parent = newEntity;
         },
