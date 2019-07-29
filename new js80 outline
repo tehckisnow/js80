@@ -1,0 +1,378 @@
+
+//call game engine constructor
+let game = new js90.Game({settings});
+game.start(); //<-- what does this do? (triggers call to frame() for one
+
+//js80
+//---------------------------------------------
+engine.main:
+  reset(): reset game to initial state
+  preload(): cache assets files, show loading screen?
+  start(); begin calling frame() if it exists
+    developer can choose to call game.systems.manager.updateAll() inside of
+      gameloop or can manually call systems as needed
+  
+  //put general useful tools like converting back and forth between 2d and 1d arrays here? or should these go in assets manager?
+      oneDToTwoD()
+      twoDToOneD()
+      rotate() //"rotate" a 2d array by 90degrees left or right
+      setColumn() //pass in an array to update every (i)th element in a 2d array
+      setRow() //pass in an array to replace element (i) of a 2d array 
+      add()  //add or subtract two 2d arrays
+      setWidth() //is this needed instead of twoDtoOneD() followed by oneDtoTwoD()?
+      translate() //offet the cells of a 2d array by x and y values
+      toString()  //convert 2d array to a sting
+      
+      ask window object if screen is wider than it is tall or taller than it is wide? (landscape or portrait)
+      ask for window/screen dimensions
+      ask for canvas dimensions
+      get 
+        screenTopLeft() //shortcut for getting xy coordinates)
+        screenTopRight()
+        screenBottomLeft()
+        screenBottomRight()
+
+systems manager:
+  active systems: []
+  updateAllSystems()
+  updateActiveSystems()
+
+log manager
+  js80.log();
+  engine.log();
+
+initialize engine
+  call settings manager
+  create necessary objects
+
+settings manager
+  //creates a new settings object to be stored in (game object?)
+  //methods for updating settings
+  create canvas if necessary
+  render frame if neccessary
+  set window title
+  set canvas size
+  theme defaults?
+  default update() order executed by systems manager
+  //specify name of update function here (frame(), loop(), tic(), etc)
+  //  ensure this is live-swapable so that it could be used to manage states!
+  settings:
+    title
+    width
+    height
+    mainLoop
+    manifest (what files to add to html as elements)
+    global framerate
+  
+  loop manager
+    //allows developer to manage multiple game loops(use instead of scenes)
+    createLoop()
+    destroyLoop()
+    pauseLoop()
+    resumeLoop()
+    updateLoop()
+    setActiveLoop()
+    switchLoop(){pauseLoop();, setActiveLoop();, resumeLoop()}
+    //array to hold multiple loops
+    //array to hold all active loops
+    //order in which loops should be updated
+  
+DOM manager
+  //create and manage DOM elements
+  //should this be consolidated into asset manager?
+  dom.newCanvas(x, y, z);
+  dom.buildBezel(dom.defaultBezel);
+  //! should reactive methods be here? Or in render system? or elsewhere?
+  //include script calls so that game scripts don't need to be manually added 
+  //    to html file; merely list them in the game file, and mention the game
+  //    file and engine in the html file
+
+asset manager
+  //assets are objects that contain data, such as the filepath to a file asset
+  default asset directory string (pulled from settings)
+  default specific asset directory(sound, map, sprite, etc)
+  //methods to process asset data (such as prepending the filepath, or converting 1d arrays to 2d)
+  
+  assets: [] //holds references to all asset data so that systems can 
+    //act on them easier, such as "stopAllAudio()" or "destroyAllSprites()"
+  
+  Strings:(?) (should strings be stored in an external file or data structure and referenced by id number?
+    //defaults could be overridden by passing an object into settings?
+    //string constructor: string(id, string, description)
+    
+  sprites
+    asset file
+    tile-size
+    height
+    width
+    Offset(x, y) (???)
+    UVs (whether to display entire image or just a chunk(cell) of a spritesheet
+    //include scale?
+    //include interpolation settings? (smoothing, pixel-art) (probably not, set these globally in settings)
+  maps
+    mapLayers
+      tilesheet/image
+      layer#
+      tile-size
+      width
+      height
+      type? (tile, collidable tile, entity position tile)
+  audio
+    file
+    data
+    controller (methods to manipulate) //or should this be in a "audio manager"?
+  drawMaps(?)
+  animation
+    tilesheet/spritesheet
+    tilesize
+    width
+    height
+    anims:
+      {name: "name", frames: [4,5,6,7]}
+    //framerate: (aside from global one that is set in settings,
+    //  should each entity have one? Or each animation component?
+    //  or each animation?
+
+UI system:
+  buttons
+  textboxes
+    themes
+    textboxes
+      nextLine() //pass text into this and it calculates the largest chunk of text to break up into lines.  respects word boundaries
+    textbox controller  //! (global or per textbox?)
+    lineConstructor()
+      linewidth: maximum character length of a string before it is wrapped to next line
+        //how to measure text width?
+  menus
+    menu controller  //! (global or per textbox?)
+    choiceConstructor()
+    
+  "healthbars" (what should this be called?  status indicators?)
+  indicators (arrows, selection boxes)
+  
+  update()
+  //checks indicators, healthbars, textboxes, and menus and updates them accordingly
+  
+  //! how to reconcile with render system?  Does this system communicate with render?
+
+input manager
+  "input" constructor: creates reference to and adds new key to watch
+  input modes? (or manually use game states?
+  //global input system with constructors for input modes which contains constructors for controls
+  //methods for pressed(currently held), justPressed, justReleased
+  //  the constructors for justPressed and justReleased can take an argument for the time threshold to trigger.
+  // should there be an option to use the event system to have input subscribe to keypresses and call an event based on that?
+  keyboard
+    query
+      justPressed
+      justReleased
+  mouse
+    query
+      leftClick
+      rightClick
+      middleClick
+      get x position
+      get y position
+      get xy
+      get previous position
+      getDifference() return difference between previousPosition and getXY
+  touch
+
+collision system:
+  tile based
+  volume based (axis locked)
+  hybrid
+
+event manager:
+  interactions
+  timers
+    global time since game launched: getTime()
+    deltaTime
+  clock? 
+    getTime()
+    timePassed()
+    difference() //gets the difference between two times
+    
+  step-triggers
+  other conditionals?
+  
+  sort(){}  //groups events based on type so that update only checks appropriate events
+  update(){} //checks the appropriate events for truth
+  
+  //idea: instead of different types of events, 
+  //an event is an object that contains:
+  {
+    id: 0,
+    triggerType: "collision",
+    trigger: function(x){if(x = trigger.x){return true)},
+    effect: function(){},
+    conditions: functions(){},
+    whenToCheck: //???? (each frame, onStep, onCollision, onKeypress)
+  }//refine this!
+  
+  organize events by type so that only appropriate ones are checked each frame
+  idea:
+    let newEvent = new event(trigger, effect, additionalConditionals, persistent)
+    types of triggers:
+      collision
+      timer
+      interaction
+      conditional(?)
+      other
+      
+scene manager
+  scene constructor: add scene into scene manager and autostart if true
+  scene.toTop() => brings a scene to the top of the stack so it will render on top
+  scene.moveDown() and scene.moveUp (called by manager or by scene?)
+  a scene can be paused or resumed
+  a scene can be "launched" or saved to be launched later.
+  run or update or sleep or wake 
+  start or stop
+  
+camera manager
+  talks to render system to apply x/y/z offset
+  converts between global and screen coordinates?
+  also establishes viewing area (independant from canvas size)
+  transition effects like fade and dissolve?
+  commonModes:
+    manual: (call camera.move({x:100, y:200, time: 400})
+    follow: (follow a particular entity)
+    followDelay: (follows an entity as they approach the edge of the screen)
+
+game state manager
+  let manager = new StateManager(){}
+  {variable: "gameState", values: ["default", "paused", "menu"]
+  remember x previous game states
+  
+input controller constructor
+  //tell dom system to set up keyboard init
+  // track which keys the input system will listen for
+  input constructor()
+    input.btn()
+    input.btnp()
+    destroy() (remove a key from this list if it is no longer needed)
+      (judicial use of this could improve performance)
+    click() (trigger an event on mouseclick (left, right, middle)
+    mouse() (returns mouse coordinates)
+      held()
+      justPressed()
+      justReleased()
+      position()
+      x()
+      y()
+      
+    
+    
+collision system
+    //methods to check for collisions (tile-based, 
+
+render system
+    //control z depth of map layers and entities
+    //make everything scalable (including textbox themes)
+    cls()
+    spr()
+    line()
+    rect()
+    rectb()
+    circ()
+    circb()
+    text()
+    map() //draw map to screen based on 2d array and tileset (manual or using asset system map?)
+    mset() //change a maptile in a map
+    
+    mget() //!this is not a render method: where should it be moved? asset system?
+    
+entity system
+    //entity constructor
+    //  default data:
+          id: 0,
+          x: 0, y: 0, z: 0,
+          sprite: {none},
+          
+    //templates (create customizable default entities for common things like npcs)
+
+animation system
+    //update a sprite's current active frame based on data
+    //!does this talk to asset system? or should it be a subsystem of asset?
+
+save system
+  constructor
+  keep track of what variables should be saved
+  methods for saving, loading, and updating these variables
+  support optional tasks like encrypting and exporting save data as string
+  
+  create() //create new savegame data object
+  read()
+  write()
+
+movement system
+  a group of constructors for modifiable default movement systems for entities to use
+    tile-based
+    free-movement
+  applyMovement() reference values and adjusts xyz positions accordingly
+    talk to physics system?
+  
+npcGenerator()
+  x/y/z
+  sprite/animations
+  events/triggers
+    dialogue
+    interactions
+    actions
+      movement
+      turn
+      find entity
+    behavior
+      chooses an action
+
+
+main update loop:
+  calls frame() 60 times per sec
+  frame() can call various systems' update() function
+  
+engine.systems.updateAll();
+engine.systems.updateAllActive();
+
+
+ --------------------------
+
+ let engine = new js80({})
+ engine.render()
+ 
+ 
+----------------------------------
+various systems such as those that used to be in the ecs subsystem
+  follow the form:
+ 
+systemName: {
+  entitiesTracked: [],
+  nextId: 0,
+  new: function(){},
+  update: function(){},
+}
+
+where should the tracking array be stored? 
+  have a unique list in each "scene"?  
+  have a global list for the entire game?
+  have both?
+  
+
+--------------------------------
+when a new game is created, a settings object and a data object are generated
+  data object holds asset data like audio and sprites
+  //! should these be combined in to one thing?
+
+----------------------------------
+//should there be an audio-controller system?
+//  Or should a method in the asset system handle it?
+//  play(), pause(), stop(), resume(), setVolume()
+----------------------------------
+someday develop an engine toolkit app, which contains;
+  map editor
+  sprite editor
+  text editor
+  file manager?
+  buttons for common tasks like createEntity()
+  window for previewing game (live or not?)
+  
+render system sorts sprites/entities/whatever by layer, then sorts each layer by id so that newer entities are rendered on top?
