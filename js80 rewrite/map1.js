@@ -7,7 +7,7 @@
  }
  if(typeof module === 'object' && module && module.exports) {
   module.exports = data;
- }})("demo",
+ }})("map1",
 { "height":20,
  "infinite":false,
  "layers":[
@@ -46,140 +46,9 @@
          "width":20,
          "x":0,
          "y":0
-        }, 
-        {
-         "draworder":"topdown",
-         "id":4,
-         "name":"interactions",
-         "objects":[
-                {
-                 "gid":100,
-                 "height":16,
-                 "id":13,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":208,
-                 "y":176
-                }, 
-                {
-                 "gid":122,
-                 "height":16,
-                 "id":14,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":160,
-                 "y":272
-                }, 
-                {
-                 "gid":122,
-                 "height":16,
-                 "id":15,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":176,
-                 "y":272
-                }, 
-                {
-                 "gid":121,
-                 "height":16,
-                 "id":16,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":144,
-                 "y":272
-                }, 
-                {
-                 "gid":99,
-                 "height":16,
-                 "id":17,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":224,
-                 "y":240
-                }, 
-                {
-                 "gid":99,
-                 "height":16,
-                 "id":18,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":240,
-                 "y":240
-                }, 
-                {
-                 "gid":99,
-                 "height":16,
-                 "id":19,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":96,
-                 "y":240
-                }, 
-                {
-                 "gid":99,
-                 "height":16,
-                 "id":20,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":64,
-                 "y":240
-                }, 
-                {
-                 "gid":42,
-                 "height":16,
-                 "id":21,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":160,
-                 "y":160
-                }, 
-                {
-                 "gid":41,
-                 "height":16,
-                 "id":22,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":16,
-                 "x":64,
-                 "y":64
-                }],
-         "opacity":1,
-         "type":"objectgroup",
-         "visible":false,
-         "x":0,
-         "y":0
         }],
- "nextlayerid":5,
- "nextobjectid":23,
+ "nextlayerid":4,
+ "nextobjectid":1,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.2.4",
@@ -188,7 +57,7 @@
         {
          "columns":12,
          "firstgid":1,
-         "image":"..\/rpg\/ww2tileset.png",
+         "image":"..\/assets\/rpg\/ww2tileset.png",
          "imageheight":176,
          "imagewidth":192,
          "margin":0,

@@ -119,11 +119,15 @@ let sprNpc3 = js80.assets.sprite("assets/gb/npc3.png", 16);
 let sprPlayer = js80.assets.sprite("assets/gb/player.png", 16);
 let tileSheet1 = js80.assets.sprite("assets/gb/tileSheet1.png", 16);
 let testSprite = js80.assets.sprite("assets/gb/spritesheet11111.png", 16);
+let tileSet1 = js80.assets.sprite("assets/gb/tileset1.png", 16);
+
+console.log(TileMaps);
 
 //maps
-let mainMap = js80.assets.processMap(mapData, "assets/gb/");
+//let mainMap = js80.assets.processMap(TileMaps[0], "assets/gb/");
+let mainMap = js80.assets.processMap(TileMaps.demo, "");
 
-let collide = mapData.layers[2].data;
+let collide = TileMaps.demo.layers[1].data;
 
 //?automate this?
 function drawMaps(map, xOffset, yOffset){
@@ -562,7 +566,7 @@ npc3.facing = "west";
 npc3.animation.setAnim("walkLeft");
 interactions.new(npc3, function(){npc3.behavior.talk(npc3, player1, "Aloha!")});
 
-let npc = npcGenerator.new(sprNpc2, 25 * 16, 25 * 16, defaultAnims, ["Hey, there!", "Wait, how did you get here?"], function(){});
+let npc = npcGenerator.new(sprNpc2, 25 * 16, 25 * 16, defaultAnims, ["Hey, there! gggggggggggggggggggggggg ggggggggggggggggggggggg gggggggggggggggggggg ffffffffffffffffffff", "Wait, how did you get here?"], function(){});
 interactions.new(npc, function(){npc.behavior.talk(npc, player1, "Aloha!")});
 
 let textController = js80.textbox.newController();

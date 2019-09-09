@@ -1,26 +1,33 @@
+//@ts-check
 //!TODO:
 //values in defaultSettings should be numbers so that math can be applied?
 //  OR they should be strings so that unit can be defined? (%)
 // document.body.onload()
 
 //new game constructor
-function Game(settingsObject){
-  js80.log(js80.strings.initText);
-  //set up new game object
-  this.settings = settingsObject || js80.settings;
-  this.start = js80.start;
-  //assign settings
-  for(i in settingsObject){
-    this.settings[i] = settingsObject[i];
-    //!Could cause a problem if this.settings[i] doesn't exist?
-  };
-  this.data = {};
-};
+function Game(settingsObject, stringsObject){
+  //takes two optional objects that update settings and strings respectively
+  //set up engine console output
+  this.log = function(text){console.log(this.strings.consoleText + text)};
 
-//global engine single-instance object (like Math object)
-let js80 = {
-  //default settings used if a settings object is not passed to game constructor
-  settings: {
+  //default string text used by engine
+  this.strings = {
+    consoleText: "[js80]: ",
+    initText: "building new game",
+    startingText: "starting game",
+  };
+  if(stringsObject){
+    for(i in stringsObject){
+      this.strings[i] = stringsObject[i];
+    };
+  };
+
+  //update console
+  this.log(this.strings.initText);
+  
+//set up new game object
+  //set up default settings
+  this.settings = {
     canvas: {},
     gameCanvasName: "gameCanvas",
     canvasWidth: 480,
@@ -33,42 +40,46 @@ let js80 = {
       font: "Ariel",
       fontSize: "12px",
     },
-  },
-  strings: {
-    consoleText: "[js80]: ",
-    initText: "building new game",
-    startingText: "starting game",
-  },
-  data: {
-    canvas: {},
-  },
-  log: function(text){console.log(js80.strings.consoleText + text)},
-  start: function(){
-    js80.log(js80.strings.startingText);
-    //initialize
-    //set up canvas
-    if(this.settings.canvas === {}){
-      //create new canvas
-      js80.dom.newCanvas();
-    }else{};
-    //set up interval and call main game loop
-  },
-  dom: {
-    new: function(){},
-    newCanvas: function(){
-      let newCanvas = document.createElement("canvas");
-      newCanvas.setSize = function(width, height){
-        newCanvas.setAttribute("width", width);
-        newCanvas.setAttribute("height", height);
+  };
+  //update settings if settingsObject has been passed in
+  if(settingsObject){
+    for(i in settingsObject){
+      this.settings[i] = settingsObject[i];
+    };
+  };
+
+  this.DOM = {
+    elements: {},
+    new: function(type, name, parent, attributesObject){
+      let newElement = document.createElement(type);
+      this.DOM.elements[name] = newElement;
+      if(attributesObject){
+        for(i in attributesObject){
+          newElement[i] = attributesObject[i];
+        };
       };
-      newCanvas.setSize(js80.settings.canvasWidth, js80.settings.canvasHeight);
-
-      newCanvas.setAttribute("id", this.settings.gameCanvasName);
-      document.body.appendChild(newCanvas);
-      this.settings.canvas = newCanvas;
-      return newCanvas;
+      //change this to be useable by other elements (make it optional?)
+      parent.insertBefore(this.DOM.elements.canvas, document.body.childNodes[0]);
     },
-    buildBezel: function(){},
-  },
+  };
 
+  //build new game
+  this.build = function(){
+    this.log(this.strings.startingText);
+    if(this.settings.canvas === {}){
+      this.DOM.new("canvas", "canvas", document.body, {id: "gameCanvas"});
+    }else{
+      //find existing canvas and attach to DOM here
+
+    };
+    this.DOM.elements.canvas.setAttribute("width", this.settings.canvasWidth + 'px');
+    this.DOM.elements.canvas.setAttribute("height", this.settings.canvasHeight + 'px');
+    this.DOM.elements.canvas.style.border = "solid black";
+    
+    this.DOM.new("title", "title", document.head, {id: "title", src: this.settings.windowTitle});
+  };
+  //!this.build = this.build.bind(this);
+
+  //data
+  this.data = {};
 };

@@ -325,6 +325,26 @@ let js80 = {
       //!this does not yet work
       //textbox.text = textbox.text.replace(/\/n/g, " /n ");
       let tokens = textbox.text.split(" ");
+
+
+      //!This has not been tested yet!
+      //check for single token longer than line length
+      for(i in tokens){
+        if(tokens[i].length > textbox.charLength){
+          let subtokens = [];
+          //split
+          let removed = tokens.splice(tokens.findIndex(tokens[i]), 1);
+          //removed.splice(textbox.charLength);
+          while(removed.length > textbox.charLength){
+            let rem2 = removed.splice(textbox.charLength);
+            subtokens.push(removed);
+            removed = rem2;
+          };
+            tokens.splice(i, 0, ...subtokens);
+        };
+      };
+
+
       let charsInLine = 0;
       let lines = [];
       //prevent undefined when blank text

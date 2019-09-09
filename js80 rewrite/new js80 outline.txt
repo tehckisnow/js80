@@ -1,3 +1,8 @@
+loop manager?
+  call metaloop every frame 
+    //should this be called "frame()"?
+  metaloop can call different loops depending on game mode (or even iterate between a list of active loops)
+
 
 //call game engine constructor
 let game = new js90.Game({settings});
