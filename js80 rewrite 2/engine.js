@@ -549,13 +549,31 @@ const engine = {
       };
     },
     collideLayer: function(map, layerIndex, entity, xMove, yMove, collisionThreshold){
+      //! the following line does not take collisionWidth into account
       let tile = map.mget(entity.x + entity.collision.xOffset + (xMove || 0) - map.parent.render.xOffset, entity.y + entity.collision.yOffset + (yMove || 0) - map.parent.render.yOffset, layerIndex);
       collisionThreshold = collisionThreshold || -1;
-      if(tile > -1){
+      if(tile > -1){//!if(tile > collisionThreshold){ ???
         return true;
       }else{
         return false;
       };
+    },
+    //return an entity if the coordinate is inside their hitbox
+    checkPoint: function(x, y, entities, tag){
+      for(i in entities){
+        //for(u in entities[i].collision.tags){
+          //if(entities[i].collision.tags[u] === tag){
+            if(x > entities[i].x + entities[i].collision.xOffset &&
+              x < entities[i].x + entities[i].collision.xOffset + entities[i].collision.width &&
+              y > entities[i].y + entities[i].collision.yOffset &&
+              y < entities[i].y + entities[i].collision.yOffset + entities[i].collision.height){
+                console.log("hit");
+                return entities[i];
+            };
+          //};
+        //};
+      };
+      return false;
     },
     checkOverlap: function(a, b, xMove, yMove){
       let xm = xMove || 0;
@@ -711,24 +729,33 @@ const engine = {
           if(key !== -1) inputManager.currentMode.keys[key].state = true;
         },
         keyUp: function(event){
-          let key = inputManager.currentMode.keys.findIndex(function(element){return element.key === event.key})
-          if(key !== -1) inputManager.currentMode.keys[key].state = false;
-          if(inputManager.currentMode.pressed.includes(event.key)){
-            let pressedKey = inputManager.currentMode.pressed.indexOf(event.key);
-            inputManager.currentMode.pressed.splice(pressedKey, 1);
+          //! mode switching can prevent a keyUp event from being recognized
+
+          for(i in inputManager.modes){
+
+          //let key = inputManager.currentMode.keys.findIndex(function(element){return element.key === event.key})
+          let key = inputManager.modes[i].keys.findIndex(function(element){return element.key === event.key})
+          if(key !== -1) inputManager.modes[i].keys[key].state = false;
+          if(inputManager.modes[i].pressed.includes(event.key)){
+            let pressedKey = inputManager.modes[i].pressed.indexOf(event.key);
+            inputManager.modes[i].pressed.splice(pressedKey, 1);
           };
+
+          };//for(i in inputManager.modes){};
+
         },
         newMode: function(name){
           let newMode = {
             keys: [],
             pressed: [],
             noKeyEffect: function(){},
-            newKey: function(key, effect){
+            newKey: function(key, effect, exclusive){
               let newKey = {
                 state: false,
               };
               newKey.key = key;
               newKey.effect = effect || function(){};
+              newKey.exclusive = exclusive || false;
               newMode.keys.push(newKey);
             },
             noKey: function(effect){
@@ -782,6 +809,11 @@ const engine = {
         if(inputManager.currentMode.keys[i].state){
           //!when an effect changes the mode, things can break; created inputManager.setMode to fix
           inputManager.currentMode.keys[i].effect();
+
+          if(inputManager.currentMode.keys[i].exclusive){
+            break;
+          };
+
         };
       };
       inputManager.currentMode.noKeyTest();

@@ -30,12 +30,71 @@ let mapAsset = mapEntity1.add.assets(scene1, "map", mapData.layers, mapData.widt
 mapEntity1.add.render(scene1, "map", mapAsset, 0, -32, -32);
 
 //create player entity from npc.js
-let player1 = npc.new(scene1, 64, 32, 1, "woah", spriteSheet1, 0, defaultAnims, 12, 16, 2, 0, []);
+let player1 = npc.new(scene1, 64, 32, 1, ["woah"], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
+let npc1 = npc.new(scene1, 5 * 16, 5 * 16, 1, [""], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
 
 //add entities to iterable arrays to be processed by systems in game loop
-let animatedEntities = [player1];
-let renderedEntities = [mapEntity1, player1];
-let collidableEntities = [player1];
+let animatedEntities = [player1, npc1];
+let renderedEntities = [mapEntity1, npc1, player1];
+let collidableEntities = [npc1, player1];
+
+player1.moveSpeed = 1;
+player1.player = true;
+
+function createDescription(x, y, text, interaction){
+  let desc = scene1.newEntity(x, y, 0);
+  desc.behavior = {};
+  desc.behavior.speak = function(){
+    console.log(text);
+    //! create a textbox
+  };
+  desc.interaction = interaction || function(){};
+  return desc;
+};//createDescription()
+
+let interactions = [];
+interactions.push(createDescription(8 * 16, 32, "just a stool."));
+
+function inspect(x1, y1, dir, entities){
+  let height = 16;
+  let width = 16;
+  let x = 0;
+  let y = 0;
+  switch(dir){
+    case "up":
+      y = -height;
+      break;
+    case "down":
+      y = height;
+      break;
+    case "left":
+      x = -width;
+      break;
+    case "right":
+      x = width;
+      break;
+    default:
+  };
+  //check for npc entity at coordinates player.x + x, player.y + y
+  for(i in entities){
+    //if there is an entity, call it's npc.behavior.speak();
+    if(entities[i].x === x1 + x && entities[i].y === y1 + y){
+      if(entities[i].behavior.speak){
+        entities[i].behavior.speak();
+      };
+      entities[i].interaction();
+    };
+  };
+};
+
+//moveWorld(nonPlayer, -1, 0);
+let nonPlayer = [mapEntity1, npc1];
+function moveWorld(things, x, y){
+  for(i in things){
+    things[i].x += x;
+    things[i].y += y;
+  };
+};
 
 //main game loop
 game1.frame = function(){
@@ -49,8 +108,9 @@ game1.frame = function(){
   engine.animation.update(animatedEntities);
   //draw entities to game canvas
   engine.render.update(game1, renderedEntities);
- 
-  //console.log(inputManager.currentMode.name);
+
+  //console.log("game:", inputManager.currentMode.name);
+  //console.log("player:", player1.state);
 };
 
 //start game
