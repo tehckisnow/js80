@@ -41,19 +41,27 @@ steppingMode.noKey(function(){
 
 playMode.newKey("a", function(){
   inputManager.setMode(steppingMode);
-  player1.behavior.step("left", 16, player1.moveSpeed, "walkLeft", function(){return collision(player1, "left", collidableEntities, mapAsset, 2)});
+  player1.animation.setAnim("walkLeft");
+  moveWorld(nonPlayer, 1, 0);
+  //player1.behavior.step("left", 16, player1.moveSpeed, "walkLeft", function(){return collision(player1, "left", collidableEntities, mapAsset, 2)});
     }, true);
 playMode.newKey("d", function(){
   inputManager.setMode(steppingMode);
-  player1.behavior.step("right", 16, player1.moveSpeed, "walkRight", function(){return collision(player1, "right", collidableEntities, mapAsset, 2)});
+  player1.animation.setAnim("walkRight");
+  moveWorld(nonPlayer, -1, 0);
+  //player1.behavior.step("right", 16, player1.moveSpeed, "walkRight", function(){return collision(player1, "right", collidableEntities, mapAsset, 2)});
     }, true);
 playMode.newKey("w", function(){
   inputManager.setMode(steppingMode);
-  player1.behavior.step("up", 16, player1.moveSpeed, "walkUp", function(){return collision(player1, "up", collidableEntities, mapAsset, 2)});
+  player1.animation.setAnim("walkUp");
+  moveWorld(nonPlayer, 0, 1);
+  //player1.behavior.step("up", 16, player1.moveSpeed, "walkUp", function(){return collision(player1, "up", collidableEntities, mapAsset, 2)});
     }, true);
 playMode.newKey("s", function(){
   inputManager.setMode(steppingMode);
-  player1.behavior.step("down", 16, player1.moveSpeed, "walkDown", function(){return collision(player1, "down", collidableEntities, mapAsset, 2)});
+  player1.animation.setAnim("walkDown");
+  moveWorld(nonPlayer, 0, -1);
+  //player1.behavior.step("down", 16, player1.moveSpeed, "walkDown", function(){return collision(player1, "down", collidableEntities, mapAsset, 2)});
     }, true);
 playMode.newKey(" ", function(){inspect(player1.x, player1.y, player1.facing, interactions)}, true);
 playMode.noKey(function(){

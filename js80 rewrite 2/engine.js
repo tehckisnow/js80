@@ -605,117 +605,123 @@ const engine = {
   //timer system
   timer: {
     newManager: function(){
-      let manager = {};
-      manager.timers = [];
-      manager.new = function(time, effect){
-        manager.timers.push(engine.timer.new(manager, time, effect));
-      },
-      manager.update = function(){
-        if(manager.timers.length > 0){
-          for(i in manager.timers){
-            manager.timers[i].time--;
-            if(manager.timers[i].time < 0){
-              manager.timers[i].effect();
-              manager.expired.push(manager.timers[i]);
+      let clock = {
+        time: 0,
+        timers: [],
+        expired: [],
+        check: function(){return clock.time},
+        update: function(){
+          clock.time++;
+          for(i in clock.timers){
+            if(!clock.timers[i].expired && clock.check() >= clock.timers[i].time + clock.timers[i].started){
+              clock.timers[i].effect();
+              clock.timers[i].expired = true;
+              clock.expired.push(clock.timers[i]);
             };
           };
-          for(i in manager.expired){
-            manager.expired[i].destroy();
+          //toRemove
+          function remove(element){
+            return element.expired === false;
           };
-          manager.expired = [];
-        };
+          clock.timers = clock.timers.filter(remove);
+          clock.expired = [];
+        },
+        timer: function(time, effect){
+          let timer = {};
+          timer.expired = false;
+          timer.started = clock.check();
+          timer.time = time;
+          timer.effect = effect || function(){};
+          clock.timers.push(timer);
+          return timer;
+        },
       };
-      return manager;
-    },
-    new: function(manager, time, effect){
-      let newTimer = {};
-      newTimer.manager = manager;
-      newTimer.time = time;
-      newTimer.effect = effect;
-      newTimer.destroy = function(){
-        function toRemove(element){
-          return element !== newTimer;
-        };
-        manager.timers = manager.timers.filter(toRemove);
-      };
-      return newTimer;
-    },
-    //update a collection of timerManagers
-    update: function(timerManagers){
-      for(i in timerManagers){
-        timerManagers[i].update();
-      };
+      return clock;
     },
   },//timer
 
   //event system
   events: {
-    //new event manager
     newEventManager: function(){
       let eventManager = {
         events: [],
-        toDestroy: [],
-        destroy: function(event){eventManager.toDestroy.push(event)},
-        //new event (created by manager)
-        new: function(eventManager, trigger, effect, condition, persistent){
-          let newEvent = engine.events.new(eventManager, trigger, effect, condition, persistent);
-          eventManager.events.push(newEvent);
-          return newEvent;
+        expired: [],
+        newEvent: function(condition, effect){
+          let event = {};
+          event.expired = false;
+          event.condition = condition;
+          event.effect = effect;
+          eventManager.events.push(event);
+          return event;
         },
-        //iterate over own events.  optional trigger tag
-        update: function(trigger){
+        update: function(){
           for(i in eventManager.events){
-            if(trigger){
-              if(eventManager.events[i].trigger === trigger){
-                if(eventManager.events[i].condition){
-                  eventManager.events[i].effect();
-                  if(!eventManager.events[i].persistent){
-                    eventManager.toDestroy.push(eventManager.events[i]);
-                    //eventManager.events[i].destroy();
-                  };
-                };
-              };
-            }else{
-              if(eventManager.events[i].condition){
+            if(eventManager.events[i].expired === false){
+              if(eventManager.events[i].condition()){
                 eventManager.events[i].effect();
-                if(!eventManager.events[i].persistent){
-                  eventManager.toDestroy.push(eventManager.events[i]);
-                  //eventManager.events[i].destroy();
-                };
+                eventManager.events[i].expired = true;
+                eventManager.expired.push(eventManager.events[i]);
               };
             };
           };
-          for(i in eventManager.toDestroy){
-            eventManager.toDestroy[i].destroy();
+          //expired
+          function remove(element){
+            return element.expired === false;
           };
-          eventManager.toDestroy = [];
+          eventManager.events = eventManager.events.filter(remove);
+          eventManager.expired = [];
         },
       };
       return eventManager;
     },
-    //new event
-    new: function(manager, trigger, effect, condition, persistent){
-      let event = {};
-      event.trigger = trigger;
-      event.effect = effect || function(){};
-      event.condition = condition || function(){return true};
-      event.persistent = persistent || false;
-      event.destroy = function(){
-        function des(element){
-          return element !== event;
-        };
-        //manager.events = manager.events.filter(des);
-      };
-      manager.events.push(event);
-      return event;
-    },
-    //iterate through a collection of event managers
-    update: function(managers){
-      for(i in managers){
-        managers[i].update();
-      };
-    },
   },//events
+
+  //sequence system: call a series of commands
+  sequence: {
+    //holds and updates one or more sequences
+    newManager: function(){
+      let manager = {
+        sequences: [],
+        expired: [],
+        update: function(){
+          for(i in manager.sequences){
+            if(manager.sequences[i].expired === false){
+              manager.sequences[i].update();
+            }else{
+              manager.expired.push(sequences[i]);
+            };
+          };
+          function remove(element){
+            return element.expired === false;
+          };
+          manager.sequences = manager.sequences.filter(remove);
+          manager.expired = [];
+        },
+        new: function(commands){
+          manager.sequences.push(engine.sequence.new(commands));
+        },
+      };
+      return manager;
+    },
+    //new sequence
+    new: function(commands){
+      let sequence = {
+        expired: false,
+      };
+      sequence.commands = commands;
+      sequence.update = function(){
+        if(sequence.commands.length < 1){
+          sequence.expired = true;
+        }else{
+          sequence.commands[0]();
+          sequence.commands.shift();
+        };
+      };
+      return sequence;
+    },
+    //wait: function(){},
+    
+  },//sequence
 
   //input system
   input: {
@@ -724,6 +730,9 @@ const engine = {
         type: "inputManager",
         modes: [],
         currentMode: "",
+        enabled: true,
+        disable: function(){for(i in modes){modes[i].disable()}},
+        enable: function(){for(i in modes){modes[i].enable()}},
         keyDown: function(event){
           let key = inputManager.currentMode.keys.findIndex(function(element){return element.key === event.key})
           if(key !== -1) inputManager.currentMode.keys[key].state = true;
@@ -746,6 +755,9 @@ const engine = {
         },
         newMode: function(name){
           let newMode = {
+            enabled: true,
+            disable: function(){newMode.enabled = false},
+            enable: function(){newMode.enabled = true},
             keys: [],
             pressed: [],
             noKeyEffect: function(){},
@@ -806,14 +818,16 @@ const engine = {
 
     update: function(inputManager){
       for(i in inputManager.currentMode.keys){
-        if(inputManager.currentMode.keys[i].state){
-          //!when an effect changes the mode, things can break; created inputManager.setMode to fix
-          inputManager.currentMode.keys[i].effect();
+        if(inputManager.currentMode.enabled){
+          if(inputManager.currentMode.keys[i].state){
+            //!when an effect changes the mode, things can break; created inputManager.setMode to fix
+            inputManager.currentMode.keys[i].effect();
 
-          if(inputManager.currentMode.keys[i].exclusive){
-            break;
+            if(inputManager.currentMode.keys[i].exclusive){
+              break;
+            };
+
           };
-
         };
       };
       inputManager.currentMode.noKeyTest();

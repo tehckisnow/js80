@@ -30,7 +30,7 @@ let mapAsset = mapEntity1.add.assets(scene1, "map", mapData.layers, mapData.widt
 mapEntity1.add.render(scene1, "map", mapAsset, 0, -32, -32);
 
 //create player entity from npc.js
-let player1 = npc.new(scene1, 64, 32, 1, ["woah"], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
+let player1 = npc.new(scene1, 8 * 16, 6 * 16, 1, ["woah"], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
 let npc1 = npc.new(scene1, 5 * 16, 5 * 16, 1, [""], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
 
 //add entities to iterable arrays to be processed by systems in game loop
@@ -91,13 +91,28 @@ function inspect(x1, y1, dir, entities){
 let nonPlayer = [mapEntity1, npc1];
 function moveWorld(things, x, y){
   for(i in things){
-    things[i].x += x;
-    things[i].y += y;
+    //! changed these to negative for tile-based movement
+    things[i].x += -x;
+    things[i].y += -y;
   };
 };
 
+let clock = engine.timer.newManager();
+clock.timer(300, function(){console.log("first timer up!")});
+
+let stepTrigger = engine.events.newEventManager();
+stepTrigger.newEvent(function(){if(mapEntity1.y > 100){return true}else{return false}}, function(){console.log("effect triggered")});
+
+let sequenceManager = engine.sequence.newManager();
+let seq1 =  [function(){console.log("I")}, function(){console.log("cannot")}, function(){console.log("believe")}, function(){console.log("it")}, function(){console.log("is")}, function(){console.log("not")}, function(){console.log("butter")}]
+
+stepTrigger.newEvent(function(){if(mapEntity1.x > 100){return true}else{return false}}, function(){sequenceManager.new(seq1)});
 //main game loop
 game1.frame = function(){
+  sequenceManager.update();
+  stepTrigger.update();
+  //update game clock
+  clock.update();
   //clear the screen
   engine.render.cls(game1, "black");
   //update timers
