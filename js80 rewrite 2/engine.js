@@ -279,16 +279,23 @@ const engine = {
       };//mget()
       
       for(i in mapData){
-        newMap.layers.push(engine.assets.mapLayer(mapData[i].data, newMap.width, true, "tilelayer"));
+        if(mapData[i].type === "objectgroup"){
+          newMap.layers.push({type: "objectgroup", objects: mapData[i].objects});
+        }else{
+          newMap.layers.push(engine.assets.mapLayer(mapData[i].data, newMap.width, true, "tilelayer"));
+        };
       };
       return newMap;
     },
     mapLayer: function(data, width, visible, type){
       let newLayer = {};
-      newLayer.data = data;
-      newLayer.width = width;
-      newLayer.visible = visible || true;
-      newLayer.type = type || "tilelayer";
+      if(type === "tilelayer"){
+        newLayer.data = data;
+        newLayer.width = width;
+        newLayer.visible = visible || true;
+        newLayer.type = "tilelayer";
+      };
+      
       return newLayer;
     },
     update: function(){},
@@ -346,7 +353,7 @@ const engine = {
       let tileSize = map.tilewidth;
       game.canvas.ctx.beginPath();
       for(i in map.layers){
-        if(map.layers[i].visible){
+        if(map.layers[i].type === "tilelayer" && map.layers[i].visible){
           function drawTile(cell){
             let tileSetWidth = map.tileset.naturalWidth / tileSize;
             let tileY = Math.floor(cell / tileSetWidth);
@@ -552,7 +559,7 @@ const engine = {
       //! the following line does not take collisionWidth into account
       let tile = map.mget(entity.x + entity.collision.xOffset + (xMove || 0) - map.parent.render.xOffset, entity.y + entity.collision.yOffset + (yMove || 0) - map.parent.render.yOffset, layerIndex);
       collisionThreshold = collisionThreshold || -1;
-      if(tile > -1){//!if(tile > collisionThreshold){ ???
+      if(tile > collisionThreshold){
         return true;
       }else{
         return false;
@@ -567,7 +574,6 @@ const engine = {
               x < entities[i].x + entities[i].collision.xOffset + entities[i].collision.width &&
               y > entities[i].y + entities[i].collision.yOffset &&
               y < entities[i].y + entities[i].collision.yOffset + entities[i].collision.height){
-                console.log("hit");
                 return entities[i];
             };
           //};
@@ -613,10 +619,12 @@ const engine = {
         update: function(){
           clock.time++;
           for(i in clock.timers){
-            if(!clock.timers[i].expired && clock.check() >= clock.timers[i].time + clock.timers[i].started){
-              clock.timers[i].effect();
-              clock.timers[i].expired = true;
-              clock.expired.push(clock.timers[i]);
+            if(!clock.timers[i].expired){
+                if(clock.check() >= clock.timers[i].time + clock.timers[i].started){
+                  clock.timers[i].effect();
+                  clock.timers[i].expired = true;
+                  clock.expired.push(clock.timers[i]);
+              };
             };
           };
           //toRemove
@@ -713,6 +721,7 @@ const engine = {
         if(sequence.commands.length < 1){
           sequence.expired = true;
         }else{
+          //if(sequence.commands[0] === ?){sequence.commands[0].time--}else
           sequence.commands[0]();
           sequence.commands.shift();
         };
@@ -720,7 +729,7 @@ const engine = {
       return sequence;
     },
     //wait: function(){},
-    
+    wait: function(num){return {time: num}},
   },//sequence
 
   //input system
@@ -738,20 +747,14 @@ const engine = {
           if(key !== -1) inputManager.currentMode.keys[key].state = true;
         },
         keyUp: function(event){
-          //! mode switching can prevent a keyUp event from being recognized
-
           for(i in inputManager.modes){
-
-          //let key = inputManager.currentMode.keys.findIndex(function(element){return element.key === event.key})
           let key = inputManager.modes[i].keys.findIndex(function(element){return element.key === event.key})
           if(key !== -1) inputManager.modes[i].keys[key].state = false;
-          if(inputManager.modes[i].pressed.includes(event.key)){
-            let pressedKey = inputManager.modes[i].pressed.indexOf(event.key);
-            inputManager.modes[i].pressed.splice(pressedKey, 1);
-          };
-
+            if(inputManager.modes[i].pressed.includes(event.key)){
+              let pressedKey = inputManager.modes[i].pressed.indexOf(event.key);
+              inputManager.modes[i].pressed.splice(pressedKey, 1);
+            };
           };//for(i in inputManager.modes){};
-
         },
         newMode: function(name){
           let newMode = {
@@ -775,9 +778,11 @@ const engine = {
             },
             noKeyTest: function(){
               let nokeys = true;
-              for(i in newMode.keys){
-                if(newMode.keys[i].state){
-                  nokeys = false;
+              if(newMode.keys.length > 0){
+                for(i in newMode.keys){
+                  if(newMode.keys[i].state){
+                    nokeys = false;
+                  };
                 };
               };
               if(nokeys){
@@ -817,8 +822,8 @@ const engine = {
     },
 
     update: function(inputManager){
-      for(i in inputManager.currentMode.keys){
-        if(inputManager.currentMode.enabled){
+      if(inputManager.currentMode.enabled){
+        for(i in inputManager.currentMode.keys){
           if(inputManager.currentMode.keys[i].state){
             //!when an effect changes the mode, things can break; created inputManager.setMode to fix
             inputManager.currentMode.keys[i].effect();
@@ -909,7 +914,7 @@ const engine = {
         textBox.text = text;
         textBox.currentLine = 0;
         textBox.textArray = engine.ui.textbox.createLines(text, textBox.charLength);
-        textBox.advance = function(){engine.ui.textbox.advance(textBox)};
+        textBox.advance = function(inputManager, mode){engine.ui.textbox.advance(textBox, inputManager, mode)};
         textBox.close = function(){engine.ui.textbox.close(textBox)};
         textBox.open = function(optionalText){engine.ui.textbox.open(textBox, optionalText)};
         textBox.destroy = function(){engine.ui.textbox.destroy(textBox.controller, textBox);};
@@ -1010,11 +1015,14 @@ const engine = {
       close: function(textbox){
         textbox.render = false;
       },
-      advance: function(textbox){
+      advance: function(textbox, inputManager, mode){
         if(textbox.currentLine + textbox.lines < textbox.textArray.length){
           textbox.currentLine++;
         }else{
           textbox.close();
+          if(mode){
+            inputManager.setMode(mode);
+          }
         };
       },
       update: function(game, textbox){},
@@ -1133,7 +1141,7 @@ const engine = {
         newFade.update = function(){
           if(newFade.active){
             newFade.opacity += newFade.rate / time;
-            let finalColor = "rgba(" + newFade.color + newFade.opacity + ")";
+            let finalColor = "rgba(" + newFade.color + "," + newFade.opacity + ")";
             newFade.draw(finalColor);
             if(newFade.toOrFrom === "to" && newFade.opacity === 1){
               newFade.complete = true;

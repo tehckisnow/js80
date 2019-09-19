@@ -1,4 +1,9 @@
 
+//TODO:
+//mapObjects are off by one tile in y axis.  why?
+//textbox sys
+//menu sys
+
 //game data
 //  this game's color reference;
 let colors = [ //darkest to lightest
@@ -24,108 +29,161 @@ let spriteSheetEntity =  scene1.newEntity();
 let spriteSheet1 = spriteSheetEntity.add.assets(scene1, "spriteSheet", "sheet1.png", 16, 16);
 //  map entity
 let mapEntity1 = scene1.newEntity();
-let tileSet1 = mapEntity1.add.assets(scene1, "tileSet", "tileset1.png", 16);
+
+let tileSetEntity1 = scene1.newEntity();
+let tileSet1 = tileSetEntity1.add.assets(scene1, "tileSet", "tileset1.png", 16);
+
 let mapData = TileMaps.map1;
 let mapAsset = mapEntity1.add.assets(scene1, "map", mapData.layers, mapData.width, tileSet1, -1);
-mapEntity1.add.render(scene1, "map", mapAsset, 0, -32, -32);
+mapEntity1.add.render(scene1, "map", mapAsset, 0, 0, 0);
+
+let mapData2 = TileMaps.map2;
+let mapEntity2 = scene1.newEntity();
+let mapAsset2 = mapEntity2.add.assets(scene1, "map", mapData2.layers, mapData2.width, tileSet1, -1);
+mapEntity2.add.render(scene1, "map", mapAsset2, 0, 0, 0);
 
 //create player entity from npc.js
-let player1 = npc.new(scene1, 8 * 16, 6 * 16, 1, ["woah"], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
+let centerPosition = {x: 8 * 16, y: 6 * 16};
+let player1 = npc.new(scene1, centerPosition.x, centerPosition.y, 1, ["woah"], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
+function getPlayerPosition(){
+  return {x: -currentMap.x + centerPosition.x, y: -currentMap.y + centerPosition.y};
+};
+function setPlayerPosition(entity, x, y){
+  entity.x = -x + centerPosition.x;
+  entity.y = -y + centerPosition.y;
+};
 let npc1 = npc.new(scene1, 5 * 16, 5 * 16, 1, [""], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
 
 //add entities to iterable arrays to be processed by systems in game loop
 let animatedEntities = [player1, npc1];
-let renderedEntities = [mapEntity1, npc1, player1];
+let renderedEntities = [npc1, player1];
 let collidableEntities = [npc1, player1];
+let currentMap = mapEntity1;
 
-player1.moveSpeed = 1;
-player1.player = true;
+let mapEffects = [
+  function(){},
+  function(){uiController.write("You have found a wrench!", dialogue)},
+  function(thisEffect){uiController.write("You found $5.00!"); console.log("$5.00!"); mapEffects[thisEffect] = function(){}},
+];
 
-function createDescription(x, y, text, interaction){
-  let desc = scene1.newEntity(x, y, 0);
-  desc.behavior = {};
-  desc.behavior.speak = function(){
-    console.log(text);
-    //! create a textbox
-  };
-  desc.interaction = interaction || function(){};
-  return desc;
-};//createDescription()
+function inspectMapObject(x, y, map, layer){
+  //! Tiled Offset
+  y = y + 16;
 
-let interactions = [];
-interactions.push(createDescription(8 * 16, 32, "just a stool."));
-
-function inspect(x1, y1, dir, entities){
-  let height = 16;
-  let width = 16;
-  let x = 0;
-  let y = 0;
-  switch(dir){
-    case "up":
-      y = -height;
-      break;
-    case "down":
-      y = height;
-      break;
-    case "left":
-      x = -width;
-      break;
-    case "right":
-      x = width;
-      break;
-    default:
-  };
-  //check for npc entity at coordinates player.x + x, player.y + y
-  for(i in entities){
-    //if there is an entity, call it's npc.behavior.speak();
-    if(entities[i].x === x1 + x && entities[i].y === y1 + y){
-      if(entities[i].behavior.speak){
-        entities[i].behavior.speak();
+  let mapObjects =  map.layers[layer].objects;
+  for(g in mapObjects){
+    if(mapObjects[g].x < x && mapObjects[g].x + mapObjects[g].width > x && mapObjects[g].y < y && mapObjects[g].y + mapObjects[g].height > y){
+      if(mapObjects[g].properties){
+        for(u in mapObjects[g].properties){
+          if(mapObjects[g].properties[u].name === "effect"){
+            mapEffects[mapObjects[g].properties[u].value](mapObjects[g].properties[u].value);
+          };
+          if(mapObjects[g].properties[u].name === "desc"){
+            uiController.write(mapObjects[g].properties[u].value, dialogue);
+            inputManager.setMode(readMode);
+          };
+          //!handle these elsewhere because they are triggered differently
+          ////!if(mapObjects[i].properties[u].name === "exit"){};
+          //!if(mapObjects[i].properties[u].name === "entity"){};
+        };
       };
-      entities[i].interaction();
     };
   };
-};
+};//inspectMapObjects()
 
-//moveWorld(nonPlayer, -1, 0);
-let nonPlayer = [mapEntity1, npc1];
-function moveWorld(things, x, y){
-  for(i in things){
-    //! changed these to negative for tile-based movement
-    things[i].x += -x;
-    things[i].y += -y;
+let timerManager = engine.timer.newManager();
+
+let dialogueTheme = engine.ui.textbox.newTheme({
+  x: 10, y: 150, height: game1.settings.height - 160, width: game1.settings.width - 20,
+  bgColor: colors[3], borderColor: colors[1], fontColor: colors[1],
+  charLength: 50, vertOffset: 10, lines: 2,
+  overflowIconColor: colors[0],
+});
+
+let uiController = engine.ui.textbox.newController(game1, dialogueTheme);
+let dialogue = uiController.new("", dialogueTheme);
+
+//get a properties object from a mapObject
+function getProperties(mapObject){
+  let properties = {};
+  for(i in mapObject.properties){
+    properties[mapObject.properties[i].name] = mapObject.properties[i].value;
   };
+  return properties;
 };
 
-let clock = engine.timer.newManager();
-clock.timer(300, function(){console.log("first timer up!")});
+function checkExit(map, layer, x, y){
+  //! Tiled Offset
+  y = y + 16;
+  
+  let mapObjects = map.assets[0].layers[layer].objects;
+  for(g in mapObjects){
+    if(mapObjects[g].x < x && mapObjects[g].x + mapObjects[g].width > x && mapObjects[g].y < y && mapObjects[g].y + mapObjects[g].height > y){
+      //!move this to asset creation!
+      let properties = getProperties(mapObjects[g]);
+      if(properties.exit !== undefined){
+        let setMap = maps[properties.exit];
+        let setX = properties.destinationX;
+        let setY = properties.destinationY;
+        let setFacing = properties.facing;
+        exit(setMap, setX, setY, setFacing);
+      };
+    };
+  };
+};//checkExit()
 
-let stepTrigger = engine.events.newEventManager();
-stepTrigger.newEvent(function(){if(mapEntity1.y > 100){return true}else{return false}}, function(){console.log("effect triggered")});
+let fade = engine.ui.effects.fade(game1, "0,0,0", 100, "to");
+let maps = [mapEntity1, mapEntity2];
+function exit(map, x, y, facing){
+  //set mode to disable input
+  inputManager.currentMode.disable();
+  //fade to black
+  fade = engine.ui.effects.fade(game1, "0,0,0", 100, "to");
+  fade.start();
+  //sound effect
+  console.log("sound effect here");
 
-let sequenceManager = engine.sequence.newManager();
-let seq1 =  [function(){console.log("I")}, function(){console.log("cannot")}, function(){console.log("believe")}, function(){console.log("it")}, function(){console.log("is")}, function(){console.log("not")}, function(){console.log("butter")}]
+  timerManager.timer(100, function(){
+    setPlayerPosition(currentMap, 0, 0);
+    //set map
+    currentMap = map;
+    //set x/y
+    setPlayerPosition(currentMap, x, y);
+    //set facing
+    player1.facing = facing || "down";
+    //fade back
+    fade = engine.ui.effects.fade(game1, "0,0,0", 100, "from");
+    fade.start();
+  });
 
-stepTrigger.newEvent(function(){if(mapEntity1.x > 100){return true}else{return false}}, function(){sequenceManager.new(seq1)});
+  //check map events
+
+
+  //set mode to reenable input
+  timerManager.timer(200, function(){
+    inputManager.currentMode.enable();
+  });
+
+};//exit()
+
 //main game loop
 game1.frame = function(){
-  sequenceManager.update();
-  stepTrigger.update();
-  //update game clock
-  clock.update();
+
+  timerManager.update();
   //clear the screen
   engine.render.cls(game1, "black");
-  //update timers
-  npcEventTimer.update();
   //update input states
   engine.input.update(inputManager);
   //update animations
   engine.animation.update(animatedEntities);
+  //manually draw currentMap to canvas
+  engine.render.map(game1, currentMap);
   //draw entities to game canvas
   engine.render.update(game1, renderedEntities);
-
-  //console.log("game:", inputManager.currentMode.name);
-  //console.log("player:", player1.state);
+  //draw ui
+  fade.update();
+  uiController.update();
+  //console.log(getPlayerPosition());
 };
 
 //start game
