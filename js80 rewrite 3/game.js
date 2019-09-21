@@ -12,6 +12,7 @@ let defaultAnims = {default: [0], idle: [0,0,1,1,0,0,2,2], idleDown: [0], idleRi
 let game1 = engine.newGame();
 let scene1 = game1.scenes.new();
 scene1.setActive();
+game1.scenes.setCurrent(scene1);
 
 let spriteSheetEntity = scene1.newEntity();
 let spriteSheet1 = spriteSheetEntity.add.assets(scene1, "spriteSheet", "sheet1.png", 16, 16);
@@ -66,11 +67,11 @@ player1.setPosition = function(entity, x, y){
   entity.y = -y + centerPosition.y;
 };
 
-let mapNpcs = [{x: 6 * 16, y: 4 * 16, text: ["holla!"]}, {x: 16 * 16, y: 4 * 16, text: ["hiya!", "later!"]}];
+let mapNpcs = [{x: 6 * 16, y: 4 * 16, z: 1, text: ["holla!"]}, {x: 16 * 16, y: 4 * 16, z: 1, text: ["hiya!", "later!"]}, {x: 7 * 16, y: 4 * 16, z: 10, text: ["I am at z-level 10!"]}, {x: 8 * 16, y: 4 * 16, z: -1, text: ["I am at z-level -1!"]}];
 function genNpcs(list){
   let npcs = [];
   for(i in mapNpcs){
-    npcs.push(npc.new(scene1, mapNpcs[i].x, mapNpcs[i].y, 1, mapNpcs[i].text, spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []));
+    npcs.push(npc.new(scene1, mapNpcs[i].x, mapNpcs[i].y, mapNpcs[i].z, mapNpcs[i].text, spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []));
   };
   return npcs;
 };
@@ -78,18 +79,23 @@ function genNpcs(list){
 //!
 //create iterable arrays for
 let animatedEntities = [player1];
-let renderedEntities = [player1];
+//let renderedEntities = [player1];
 let collidableEntities = [player1];
 let entitiesToMove = [];
 
+let imageTest = scene1.newEntity(0, 0, -20);
+let image111 = imageTest.add.assets(game1, "image", "tileset1.png");
+imageTest.add.render(scene1, "image", image111, 0, 0);
+//renderedEntities.push(imageTest);
+
 //!NPCs
 let generatedNpcs = genNpcs(mapNpcs);
-for(i in generatedNpcs){
-  renderedEntities.push(generatedNpcs[i]);
-  entitiesToMove.push(generatedNpcs[i]);
-  collidableEntities.push(generatedNpcs[i]);
-  animatedEntities.push(generatedNpcs[i]);
-};
+// for(i in generatedNpcs){
+//   renderedEntities.push(generatedNpcs[i]);
+//   entitiesToMove.push(generatedNpcs[i]);
+//   collidableEntities.push(generatedNpcs[i]);
+//   animatedEntities.push(generatedNpcs[i]);
+// };
 
 //!
 //current map
@@ -199,7 +205,8 @@ function exit(map, x, y, facing){
   //sound effect
   audioController.play(sfx);
  
-  timerManager.timer(100, function(){
+  game1.scenes.current.timer.manager.timer(100, function(){
+  //timerManager.timer(100, function(){
     player1.setPosition(currentMap, 0, 0);
     //set map
     currentMap = map;
@@ -221,7 +228,8 @@ function exit(map, x, y, facing){
   });
 
   //set mode to reenable input
-  timerManager.timer(200, function(){
+  //timerManager.timer(200, function(){
+  game1.scenes.current.timer.manager.timer(200, function(){
     inputManager.currentMode.enable();
   });
 
@@ -233,14 +241,17 @@ let sfx = audioController.newTrack("sfx", "punch.wav");
 //audioController.play(music);
 
 game1.frame = function(){
-  timerManager.update();
-  engine.render.cls(game1, "black");
+  //timerManager.update();
+  //engine.render.cls(game1, "black");
   engine.input.update(inputManager);
-  engine.animation.update(animatedEntities);
-  engine.render.map(game1, currentMap);
-  engine.render.update(game1, renderedEntities);
-  fade.update();
+  //engine.animation.update(animatedEntities);
+  //scene1.update();
+  // engine.render.map(game1, currentMap);
+  // engine.render.update(game1, renderedEntities);
+  //fade.update();
   uiController.update();
+
+  game1.update();
 
 };//game1.frame()
 

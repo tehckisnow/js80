@@ -45,16 +45,13 @@ function getPoint(dir, tileSize){
 function collisionTest(map, layer, entity, dir, group){
   let direction = getPoint(dir, 16);
   if(engine.collision.checkPoint(entity.x + direction.x, entity.y + direction.y, group, "physical")){return true};
-  let position = player1.getPosition();
+  let position = position.get(game1.scenes.current.map.current, player1);
   if(engine.collision.checkCollisionLayer(map, layer, position.x + direction.x, position.y + direction.y)){return true};
   return false;
 };//collision()
 
 function step(entity, dir, distance){
-  if(collisionTest(currentMap.assets[0], 1, entity, dir, collidableEntities)){return};
-
-  //if(runModifier = 1){distance = distance / 2}
-
+  if(collisionTest(game1.scenes.current.map.current.assets[0], 1, entity, dir, game1.scenes.current.collision.entities)){return};
   inputManager.setMode(steppingMode);
   entity.justFinished = true;
   entity.distanceRemaining = distance;
@@ -62,7 +59,7 @@ function step(entity, dir, distance){
     if(entity.distanceRemaining > 0){
       entity.distanceRemaining--;
       move(entity, dir);
-      timerManager.timer(1, function(){check()});
+      game1.scenes.current.timer.manager.timer(1, function(){check()});
     }else if(entity.justFinished){
       entity.justFinished = false;
       inputManager.setMode(playMode);

@@ -65,8 +65,14 @@ const engine = {
         new: function(){
           return engine.scenes.new(game);
         },
+        current: {},
+        setCurrent: function(scene){game.scenes.current = scene},
         active: [],
         inactive: [],
+      },
+      save: {
+        //!
+        
       },
       update: function(){
         engine.update(game.scenes.active);
@@ -85,11 +91,7 @@ const engine = {
   },//newGame()
   update: function(scenes){
     for(i in scenes){
-      let systems = scenes[i].parent.settings.systemOrder;
-      for(u in systems){
-        //! the following line needs a test confirm it has the component
-        engine[systems[u]].update(scenes[i].entities);
-      };
+      scenes[i].update();
     };
   },//update()
 
@@ -126,7 +128,53 @@ const engine = {
           newScene.entities.push(entity);
           return entity;
         },
-
+        //animation
+        animation: {
+          entities: [],
+          update: function(){
+            engine.animation.update(newScene.animation.entities);
+          },
+        },
+        //render
+        render: {
+          entities: [],
+          update: function(){
+            engine.render.update(newScene.parent, newScene.render.entities);
+          },
+        },
+        //collision
+        collision: {
+          entities: [],
+          update: function(){},//!is there any need for this?
+        },
+        //timer
+        timer: {
+          manager: engine.timer.newManager(),
+        },
+        //map
+        map: {
+          current: {},
+          setCurrent: function(map){newScene.map.current = map},
+          getCurrent: function(){return newScene.map.current},
+        },
+        effects: {},
+        audio: {},
+        ui: {
+          uiElements: [],
+          //!move uiController out of textbox so that it can be used for menus as well
+          manager: engine.ui.textbox.newController(),
+        },
+        //update scene
+        update: function(){
+          newScene.timer.manager.update();
+          //map?
+          //collision?
+          //events?
+          newScene.animation.update();
+          engine.render.update(newScene.parent, newScene.render.entities);
+        },
+        //called every frame; used for developer input
+        frame: function(){},
       };
       game.scenes.inactive.push(newScene);
       return newScene;
@@ -160,18 +208,22 @@ const engine = {
             let render = engine.render.new(scene, type, ...args);
             render.parent = newEntity;
             newEntity.render = render;
+            scene.render.entities.push(newEntity);
+            engine.render.sort(scene.render.entities);
             return render;
           },
           camera: function(scene, ...args){},
           animation: function(...args){
             let animation = engine.animation.new(...args);
             animation.parent = newEntity;
+            scene.animation.entities.push(newEntity);
             newEntity.animation = animation;
             return animation;
           },
           collision: function(scene, ...args){
             let collision = engine.collision.new(...args);
             collision.parent = newEntity;
+            //scene.collision.entities.push(newEntity);
             newEntity.collision = collision;
             return collision;
           },
@@ -450,8 +502,14 @@ const engine = {
       },
     },
 
+    sort: function(collection){
+      //sort by z-axis
+      collection.sort(function(a, b){return a.z - b.z});
+
+    },
     //pass an array of entities with render components to draw all of them to the screen
     update: function(game, collection){
+      engine.render.cls(game, game.settings.defaultBgColor);
       for(i in collection){
         let current = collection[i];
         switch(current.render.type){
