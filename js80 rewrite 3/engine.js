@@ -1,17 +1,3 @@
-//TODO:
-//input does not have components
-//event system
-//save system
-//UI system
-//engine.update()
-//fix tileset asset constructor
-//game.frame() for global loop or scene.frame() (or both?)
-//constructor for collisionTest object, or collisionRule object
-//format: thing.new() or newThing() or scene1.new.thing() ?
-//incorporate sound/music into assets/controller
-//textBox.advance(line? page?);
-//menu
-
 const engine = {
   defaultSettings: {
     debug: false,
@@ -97,7 +83,6 @@ const engine = {
     game.canvas = engine.DOM.buildCanvas(game);
     return game;
   },//newGame()
-
   update: function(scenes){
     for(i in scenes){
       let systems = scenes[i].parent.settings.systemOrder;
@@ -106,7 +91,6 @@ const engine = {
         engine[systems[u]].update(scenes[i].entities);
       };
     };
-
   },//update()
 
   //systems
@@ -154,12 +138,12 @@ const engine = {
     new: function(scene, x, y, z){
       let newEntity = {
         assets: [],
-        render: [],
-        animation: [],
-        collision: [],
-        ui: [],
-        input: [],
-        save: [],
+        // render: [],
+        // animation: [],
+        // collision: [],
+        // ui: [],
+        // input: [],
+        // save: [],
         destroy: function(){
           scene.entities.splice(scene.entity.iterable.findIndex(newEntity), 1);
         },
@@ -206,18 +190,18 @@ const engine = {
   //assets manager
   assets: {
     new: function(scene, assetType, ...args){
-      let newAsset = engine.assets[assetType](scene, assetType, ...args);
+      let newAsset = engine.assets[assetType](scene, ...args);
       newAsset.type = assetType;
       //
       return newAsset;
     },
-    image: function(scene, assetType, file){
+    image: function(scene, file){
       let newAsset = engine.DOM.create("img");
       newAsset.setAttribute("src", file);
       return newAsset;
     },
     sound: function(){},
-    tileSet: function(scene, assetType, file, tileSize){
+    tileSet: function(scene, file, tileSize){
       let newTileSet = engine.DOM.create("img");
       newTileSet.setAttribute("src", file);
       newTileSet.tileSize = tileSize;
@@ -242,7 +226,7 @@ const engine = {
       };
       return sprites;
     },
-    spriteSheet: function(scene, assetType, file, width, height){
+    spriteSheet: function(scene, file, width, height){
       let newSpriteSheet = engine.DOM.create("img");
       newSpriteSheet.setAttribute("src", file);
       newSpriteSheet.spriteWidth = width || scene.parent.settings.defaultTileSize;
@@ -255,39 +239,32 @@ const engine = {
       newSpriteSheet.sprites = engine.assets.genSprites(newSpriteSheet);
       return newSpriteSheet;
     },
-    map: function(scene, assetType, mapData, width, tileSet, TiledOffset){
+    map: function(scene, mapData, width, tileSet, collideLayer, TiledOffset){
       let newMap = {
         type: "map",
         layers: [],
       };
+      newMap.collideLayer = collideLayer;
       newMap.TiledOffset = 0;
       if(TiledOffset){newMap.TiledOffset = TiledOffset};
       newMap.tileset = tileSet;
+      newMap.properties = mapData.properties;
       newMap.tileheight = tileSet.tileSize;
       newMap.tilewidth = tileSet.tileSize;
       newMap.width = width; //width in tiles
-      
       newMap.mget = function(x, y, layer){
-        let x2 = Math.floor(x / newMap.tilewidth);
-        let y2 = Math.floor(y / newMap.tileheight);
-        let result = -1;
-        let cell = (newMap.width * y2) + x2;
-        if(cell > 0 && newMap.layers[layer].data[cell]){
-          result = newMap.layers[layer].data[cell]
-        };
-        return result;
+        return newMap.layers[layer].mget(x, y);
       };//mget()
-      
-      for(i in mapData){
-        if(mapData[i].type === "objectgroup"){
-          newMap.layers.push({name: mapData[i].name, type: "objectgroup", objects: mapData[i].objects});
+      for(i in mapData.layers){
+        if(mapData.layers[i].type === "objectgroup"){
+          newMap.layers.push({name: mapData.layers[i].name, type: "objectgroup", objects: mapData.layers[i].objects});
         }else{
-          newMap.layers.push(engine.assets.mapLayer(mapData[i].name, mapData[i].data, newMap.width, true, "tilelayer"));
+          newMap.layers.push(engine.assets.mapLayer(mapData.layers[i].name, mapData.layers[i].data, newMap.width, mapData.layers[i].visible, "tilelayer", newMap.tileset));
         };
       };
       return newMap;
     },
-    mapLayer: function(name, data, width, visible, type){
+    mapLayer: function(name, data, width, visible, type, tileSet){
       let newLayer = {};
       if(type === "tilelayer"){
         newLayer.name = name;
@@ -295,6 +272,18 @@ const engine = {
         newLayer.width = width;
         newLayer.visible = visible || true;
         newLayer.type = "tilelayer";
+        newLayer.tileSet = tileSet;
+
+        newLayer.mget = function(x, y){
+          let x2 = Math.floor(x / newLayer.tileSet.tileSize);//tilewidth);
+          let y2 = Math.floor(y / newLayer.tileSet.tileSize);//tileheight);
+          let result = -1;
+          let cell = (newLayer.width * y2) + x2;
+          if(cell > 0 && newLayer.data[cell]){
+            result = newLayer.data[cell]
+          };
+          return result;
+        };//mget()
       };
       
       return newLayer;
@@ -1160,34 +1149,6 @@ const engine = {
         };
         return newFade;
       },
-      //! only works once so far! fix!
-      //shortcut for fade to color, perform an optional function, wait, fade from color
-      transition: function(game, color, timeToFade, timeToWait, timeToFadeBack, effect){
-        //fade-to
-        let fade = engine.ui.effects.fade(game, color, timeToFade, "to");
-        //wait
-        let timer = engine.timer.newManager();
-        if(effect){timer.new(timeToFade, function(){effect()})};
-        timer.new(timeToFade + timeToWait, function(){
-          fade.toOrFrom = "from";
-          fade.complete = false;
-          fade.rate = -1;
-        });
-        //after complete, set to inactive
-        timer.new(timeToFade + timeToWait + timeToFadeBack, function(){fade.active = false});
-        
-        let fadeEffect = {};
-        fadeEffect.fade = fade;
-        fadeEffect.timer = timer;
-        fadeEffect.start = function(){fade.active = true;};
-        fadeEffect.update = function(){
-          if(fade.active){
-            fadeEffect.fade.update();
-            fadeEffect.timer.update();
-          };
-        };
-        return fadeEffect;
-      },
       update: function(arrayOfEffects){
         for(i in arrayOfEffects){
           arrayOfEffects[i].update();
@@ -1210,38 +1171,48 @@ const engine = {
   //audio
   audio: {
     newController: function(){
-      let controller = {};
-
+      let controller = {
+        mute: false,
+        state: "stopped", //["stopped", "playing", "paused"]
+        tracks: [],
+        newTrack: function(name, file){
+          let newTrack = engine.DOM.create("audio");
+          newTrack.name = name;
+          newTrack.setAttribute("src", file);
+          controller.tracks.push(newTrack);
+          return newTrack;
+        },
+        musicCurrentlyPlaying: [],
+        play: async function(track, loop){
+          try {
+            track.load();
+            await track.play();
+            controller.musicCurrentlyPlaying.push(track);
+            controller.state = "playing";
+          } catch(err) {engine.log("error: " + err)};
+          if(loop){track.loop = true};
+        },
+        stop: function(){
+          for(i in controller.musicCurrentlyPlaying){
+            controller.pause(controller.musicCurrentlyPlaying[i]);
+          };
+          controller.state = "stopped";
+        },
+        pause: function(track){
+          track.pause();
+          controller.musicCurrentlyPlaying.splice(controller.musicCurrentlyPlaying.indexOf(track), 1);
+          controller.state = "paused";
+        },
+        sfx: async function(sound){
+          try {
+            sound.load();
+            await sound.play();
+          } catch(err) {
+            engine.log("error: " + err);
+          };
+        },
+      };
       return controller;
-    },
-    music: async function(track, loop, stop){
-      //let track = track.toLowerCase();
-      if((track === "stopall" || track === "stop all") && js80.musicCurrentlyPlaying.length > 0){
-        for(i in js80.musicCurrentlyPlaying){
-          js80.music(js80.musicCurrentlyPlaying[i], false, true);
-        }
-      }else if(stop){
-        track.pause()
-        js80.musicCurrentlyPlaying.splice(js80.musicCurrentlyPlaying.indexOf(track), 1);
-      }else{
-        try {
-          track.load(); //this causes track to start over instead of resume from pause if called again
-          await track.play();
-          js80.musicCurrentlyPlaying.push(track);
-        } catch(err) {
-          engine.log("error: " + err);
-        }
-        if(loop) track.loop = true;
-      }
-    },
-
-    //play a sound effect
-    sfx: async function(sound){
-      try {
-        await sound.play();
-      } catch(err) {
-        engine.log("error: " + err);
-      }
     },
   },//audio
 

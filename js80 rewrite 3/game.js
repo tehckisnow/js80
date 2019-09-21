@@ -1,12 +1,3 @@
-
-//TODO:
-//mapObjects are off by one tile in y axis.  why?
-////stop movement when using a door
-////tile collision detection
-//error in console; "Cannot set property 'expired' of undefined"
-  //  caused by timer system?
-//menu sys
-
 //game data
 //  this game's color reference;
 let colors = [ //darkest to lightest
@@ -18,78 +9,118 @@ let colors = [ //darkest to lightest
 //  default animations
 let defaultAnims = {default: [0], idle: [0,0,1,1,0,0,2,2], idleDown: [0], idleRight: [3], idleLeft: [6], idleUp: [9], walkLeft: [6,7,6,8], walkRight: [3,4,3,5], walkUp: [9,10,9,11], walkDown: [0,1,0,2]};
 
-//create game object
 let game1 = engine.newGame();
-//create first scene and set it active
 let scene1 = game1.scenes.new();
 scene1.setActive();
 
-//create assets
-//  spritesheet
-//    create entity
-let spriteSheetEntity =  scene1.newEntity();
-//    add spritesheet asset component
+let spriteSheetEntity = scene1.newEntity();
 let spriteSheet1 = spriteSheetEntity.add.assets(scene1, "spriteSheet", "sheet1.png", 16, 16);
-//  map entity
+
 let mapEntity1 = scene1.newEntity();
 
 let tileSetEntity1 = scene1.newEntity();
 let tileSet1 = tileSetEntity1.add.assets(scene1, "tileSet", "tileset1.png", 16);
 
-let mapData = TileMaps.map1;
-let mapAsset = mapEntity1.add.assets(scene1, "map", mapData.layers, mapData.width, tileSet1, -1);
+let mapData = [TileMaps.testMap1, TileMaps.map1, TileMaps.map2];
+let mapAsset = mapEntity1.add.assets(scene1, "map", mapData[0], mapData[0].width, tileSet1, 2, -1);
 mapEntity1.add.render(scene1, "map", mapAsset, 0, 0, 0);
+mapAsset.layers[1].visible = false;
 
-let mapData2 = TileMaps.map2;
-let mapEntity2 = scene1.newEntity();
-let mapAsset2 = mapEntity2.add.assets(scene1, "map", mapData2.layers, mapData2.width, tileSet1, -1);
-mapEntity2.add.render(scene1, "map", mapAsset2, 0, 0, 0);
+//find player starting position
+function getStart(layer){
+  for(obj in mapAsset.layers[layer].objects){
+    for(prop in mapAsset.layers[layer].objects[obj].properties){
+      if(mapAsset.layers[layer].objects[obj].properties[prop].name === "start"){
+        return {
+          x: mapAsset.layers[layer].objects[obj].x,
+          y: mapAsset.layers[layer].objects[obj].y,
+          facing: mapAsset.layers[layer].objects[obj].properties[prop].value,
+        };
+      };
+    };
+  };
+};//getStart()
+let startingPosition = getStart(2);
 
-//create player entity from npc.js
 let centerPosition = {x: 8 * 16, y: 6 * 16};
+
 let player1 = npc.new(scene1, centerPosition.x, centerPosition.y, 1, ["woah"], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
-function getPlayerPosition(){
+
+//!generalize getPosition and setPosition!
+
+let position = {
+  get: function(map, entity){
+    return {x: -map.x + entity.x, y: -map.y + entity.y};
+  },
+  set: function(map, entity, x, y){
+    entity.x = -x + entity.x;
+    entity.y = -y + entity.y;
+  },
+};
+
+player1.getPosition = function(){
   return {x: -currentMap.x + centerPosition.x, y: -currentMap.y + centerPosition.y};
 };
-function setPlayerPosition(entity, x, y){
+player1.setPosition = function(entity, x, y){
   entity.x = -x + centerPosition.x;
   entity.y = -y + centerPosition.y;
 };
 
-let mapEntityEffects = [
-  function(){}, function(){console.log("testing")},
-  function(){console.log("entity effect success!")},
-];
-
-//let npc1 = npc.new(scene1, 5 * 16, 5 * 16, 1, [""], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
-let npc1 = makeNpc(4 * 16, 5 * 16, "'Hello!'", 1);
-
-//add entities to iterable arrays to be processed by systems in game loop
-let animatedEntities = [player1, npc1];
-let renderedEntities = [npc1, player1];
-let collidableEntities = [npc1, player1];
-let currentMap = mapEntity1;
-
-let mapEffects = [
-  function(){},
-  function(){uiController.write("You have found a wrench!", dialogue)},
-  function(thisEffect){uiController.write("You found $5.00!"); console.log("$5.00!"); mapEffects[thisEffect] = function(){}},
-];
-
-function makeNpc(x, y, text, effect){
-  let newNpc = npc.new(scene1, x, y, 1, [""], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
-
-  newNpc.properties = [];
-  newNpc.properties.push({name: "desc", type: "string", value: text || ""});
-  //newNpc.properties.push({name: "entity", value: mapEntityEffects[effect]});
-  newNpc.properties.push({name: "effect", type: "int", value: effect});
-
-  TileMaps.map1.layers[4].objects.push(newNpc);
-  return newNpc;
+let mapNpcs = [{x: 6 * 16, y: 4 * 16, text: ["holla!"]}, {x: 16 * 16, y: 4 * 16, text: ["hiya!", "later!"]}];
+function genNpcs(list){
+  let npcs = [];
+  for(i in mapNpcs){
+    npcs.push(npc.new(scene1, mapNpcs[i].x, mapNpcs[i].y, 1, mapNpcs[i].text, spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []));
+  };
+  return npcs;
 };
 
+//!
+//create iterable arrays for
+let animatedEntities = [player1];
+let renderedEntities = [player1];
+let collidableEntities = [player1];
+let entitiesToMove = [];
+
+//!NPCs
+let generatedNpcs = genNpcs(mapNpcs);
+for(i in generatedNpcs){
+  renderedEntities.push(generatedNpcs[i]);
+  entitiesToMove.push(generatedNpcs[i]);
+  collidableEntities.push(generatedNpcs[i]);
+  animatedEntities.push(generatedNpcs[i]);
+};
+
+//!
+//current map
+let currentMap = mapEntity1;
+
+player1.setPosition(currentMap, startingPosition.x, startingPosition.y);
+
+//!
+//map effects (events?)
+let mapEffects = [
+  function(){},
+  function(){
+  uiController.write("You have found the treasure!", dialogue);
+  mapEffects[1] = function(){};
+},
+function(){},function(){},
+];
+
+function talk(x, y, npcs){
+  for(g in npcs){
+    if(npcs[g].x < x && npcs[g].x + npcs[g].width > x && npcs[g].y < y && npcs[g].y + npcs[g].height > y){
+      npcs[g].behavior.turn(npcs[g].behavior.find(player1));
+      uiController.write(npcs[g].dialogue[npcs[g].dialogueLine], dialogue);
+      inputManager.setMode(readMode);
+      if(npcs[g].dialogueLine < npcs[g].dialogue.length - 1){npcs[g].dialogueLine++};
+    };
+  };
+};//talk()
+
 function inspectMapObject(x, y, map, layer){
-  //! Tiled Offset
+  //Tiled Offset
   y = y + 16;
   let mapObjects =  map.layers[layer].objects;
   for(g in mapObjects){
@@ -103,14 +134,12 @@ function inspectMapObject(x, y, map, layer){
             uiController.write(mapObjects[g].properties[u].value, dialogue);
             inputManager.setMode(readMode);
           };
-          //!handle these elsewhere because they are triggered differently
-          ////!if(mapObjects[i].properties[u].name === "exit"){};
-          //!if(mapObjects[i].properties[u].name === "entity"){};
         };
       };
     };
   };
 };//inspectMapObjects()
+
 
 let timerManager = engine.timer.newManager();
 
@@ -124,6 +153,7 @@ let dialogueTheme = engine.ui.textbox.newTheme({
 let uiController = engine.ui.textbox.newController(game1, dialogueTheme);
 let dialogue = uiController.new("", dialogueTheme);
 
+//!
 //get a properties object from a mapObject
 function getProperties(mapObject){
   let properties = {};
@@ -132,11 +162,10 @@ function getProperties(mapObject){
   };
   return properties;
 };
-
+//checkExit
 function checkExit(map, layer, x, y){
-  //! Tiled Offset
+  //Tiled Offset
   y = y + 16;
-  
   let mapObjects = map.assets[0].layers[layer].objects;
   for(g in mapObjects){
     if(mapObjects[g].x < x && mapObjects[g].x + mapObjects[g].width > x && mapObjects[g].y < y && mapObjects[g].y + mapObjects[g].height > y){
@@ -153,8 +182,13 @@ function checkExit(map, layer, x, y){
   };
 };//checkExit()
 
+//!
 let fade = engine.ui.effects.fade(game1, "0,0,0", 100, "to");
-let maps = [mapEntity1, mapEntity2];
+let maps = [mapEntity1];
+let mapEvents = [
+  function(){console.log("map event 1 triggered!")},
+];
+//!
 function exit(map, x, y, facing){
   //set mode to disable input
   //inputManager.currentMode.disable();
@@ -163,23 +197,28 @@ function exit(map, x, y, facing){
   fade = engine.ui.effects.fade(game1, "0,0,0", 100, "to");
   fade.start();
   //sound effect
-  console.log("sound effect here");
-
+  audioController.play(sfx);
+ 
   timerManager.timer(100, function(){
-    setPlayerPosition(currentMap, 0, 0);
+    player1.setPosition(currentMap, 0, 0);
     //set map
     currentMap = map;
-    //set x/y
-    setPlayerPosition(currentMap, x, y);
+    //set x/y //!y axis is offset by tileSize because of Tiled
+    player1.setPosition(currentMap, x, y - 16);
     //set facing
     player1.facing = facing || "down";
     //fade back
     fade = engine.ui.effects.fade(game1, "0,0,0", 100, "from");
     fade.start();
+    //check map events
+    for(prop in currentMap.assets[0].properties){
+      if(currentMap.assets[0].properties[prop].name === "event"){
+        //!check value of expired here?
+        mapEvents[currentMap.assets[0].properties[prop].value]();
+        //!set value of expired to 1 here?
+      };
+    };
   });
-
-  //check map events
-
 
   //set mode to reenable input
   timerManager.timer(200, function(){
@@ -188,25 +227,21 @@ function exit(map, x, y, facing){
 
 };//exit()
 
-//main game loop
-game1.frame = function(){
+let audioController = engine.audio.newController();
+let music = audioController.newTrack("music", "music.mp3");
+let sfx = audioController.newTrack("sfx", "punch.wav");
+//audioController.play(music);
 
+game1.frame = function(){
   timerManager.update();
-  //clear the screen
   engine.render.cls(game1, "black");
-  //update input states
   engine.input.update(inputManager);
-  //update animations
   engine.animation.update(animatedEntities);
-  //manually draw currentMap to canvas
   engine.render.map(game1, currentMap);
-  //draw entities to game canvas
   engine.render.update(game1, renderedEntities);
-  //draw ui
   fade.update();
   uiController.update();
-  //console.log(getPlayerPosition());
-};
 
-//start game
+};//game1.frame()
+
 game1.start();

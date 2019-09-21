@@ -1,5 +1,4 @@
 let distance = 16;
-let runModifier = 0;
 
 function convertDirection(dir){
   let x = 0;
@@ -45,16 +44,14 @@ function getPoint(dir, tileSize){
 
 function collisionTest(map, layer, entity, dir, group){
   let direction = getPoint(dir, 16);
-  if(engine.collision.checkPoint(entity.x + direction.x, entity.y + direction.y, group, "physical")){
-    return true;
-  };
-  let position = getPlayerPosition();
+  if(engine.collision.checkPoint(entity.x + direction.x, entity.y + direction.y, group, "physical")){return true};
+  let position = player1.getPosition();
   if(engine.collision.checkCollisionLayer(map, layer, position.x + direction.x, position.y + direction.y)){return true};
   return false;
 };//collision()
 
 function step(entity, dir, distance){
-  if(collisionTest(currentMap.assets[0], 2, entity, dir, collidableEntities)){return};
+  if(collisionTest(currentMap.assets[0], 1, entity, dir, collidableEntities)){return};
 
   //if(runModifier = 1){distance = distance / 2}
 
@@ -70,7 +67,7 @@ function step(entity, dir, distance){
       entity.justFinished = false;
       inputManager.setMode(playMode);
       let center = getPoint("center", 16);
-      checkExit(currentMap, 4, -currentMap.x + player1.x + center.x, -currentMap.y + player1.y + center.y);
+      checkExit(currentMap, 2, -currentMap.x + player1.x + center.x, -currentMap.y + player1.y + center.y);
     };
   };
   check();
@@ -80,13 +77,16 @@ function move(entity, dir, distance){
     let direction = convertDirection(dir);
     let x = direction.x;
     let y = direction.y;
-    moveWorld(x, y);
+    moveWorld(x, y, entitiesToMove);
   //};
 };//move()
 
-function moveWorld(x, y){
+function moveWorld(x, y, entities){
   //!replace this later!
-  let things = [currentMap, npc1];
+  let things = [currentMap];
+  for(i in entities){
+    things.push(entities[i]);
+  };
   for(buh in things){
     //! changed these to negative for tile-based movement
     things[buh].x += -x + runModifier;
@@ -137,12 +137,10 @@ playMode.newKey("s", function(){
 playMode.newKey(" ", function(){
   //check map for interaction
   let dir = getPoint(player1.facing, 16);
-  inspectMapObject(-currentMap.x + player1.x + dir.x, -currentMap.y + player1.y + dir.y, mapAsset, 4);
+  let pos = player1.getPosition();
+  talk(player1.x + dir.x, player1.y + dir.y, generatedNpcs);
+  inspectMapObject(pos.x + dir.x, pos.y + dir.y, mapAsset, 2);
 }, false);
-playMode.newKey("Enter", function(){
-  let center = getPoint("center", 16);
-  checkExit(currentMap, 4, -currentMap.x + player1.x + center.x, -currentMap.y + player1.y + center.y);
-});
 
 playMode.noKey(function(){
   
