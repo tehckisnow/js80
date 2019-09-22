@@ -72,9 +72,11 @@ const engine = {
       },
       save: {
         //!
-        
+
       },
+      input: {update: function(){}},
       update: function(){
+        game.input.update();
         engine.update(game.scenes.active);
       },
     };
@@ -171,7 +173,13 @@ const engine = {
           //collision?
           //events?
           newScene.animation.update();
-          engine.render.update(newScene.parent, newScene.render.entities);
+          if(newScene.camera){
+            newScene.camera.update();
+            //!this may allow possibility of wrong scene updating camera
+          }else{
+            engine.render.update(newScene.parent, newScene.render.entities);
+          };
+          //engine.render.update(newScene.parent, newScene.render.entities);
         },
         //called every frame; used for developer input
         frame: function(){},
@@ -322,7 +330,7 @@ const engine = {
         newLayer.name = name;
         newLayer.data = data;
         newLayer.width = width;
-        newLayer.visible = visible || true;
+        newLayer.visible = visible;
         newLayer.type = "tilelayer";
         newLayer.tileSet = tileSet;
 
@@ -375,13 +383,13 @@ const engine = {
       );
     },
     //render a map entity
-    map: function(game, mapEntity){
+    map: function(game, mapEntity, xOff, yOff, zOff){
       let xOffset = mapEntity.render.xOffset;
       let yOffset = mapEntity.render.yOffset;
       let zOffset = mapEntity.render.zOffset;
-      let x = mapEntity.x;
-      let y = mapEntity.y;
-      let z = mapEntity.z;
+      let x = mapEntity.x + (xOff || 0);
+      let y = mapEntity.y + (yOff || 0);
+      let z = mapEntity.z + (zOff || 0);
 
       //! the following will find first map asset.  this could cause problems if there are multiple.
       let map;
@@ -483,24 +491,53 @@ const engine = {
       game.canvas.ctx.strokeText(text || "", x || 0, y || 0);
     },
 
-    //! This is just taken from a previous version and has not been adapted
     camera: {
-      x: 0,
-      y: 0,
-      z: 0,
-      follow: function(target, xOffset, yOffset, zOffset){
-        if(!target){
-          target = {x: 0, y: 0, z: 0};
+      new: function(scene){
+        let camera = {
+          scene: scene,
+          game: scene.parent,
+          x: 0,
+          y: 0,
+          z: 0,
+          following: "none",
+          xOffset: 0, yOffset: 0, zOffset: 0,//used for following
+          position: {
+            //translate between screen and map coordinates
+            get: function(entity){
+              let map = scene.map.current;
+              return {x: -map.x + entity.x, y: -map.y + entity.y};
+            },
+            set: function(entity, x, y){
+              entity.x = -x + entity.x;
+              entity.y = -y + entity.y;
+            },
+          },
+          pan: function(x, y, speed, duration){},
+          follow: function(target, xOffset, yOffset, zOffset){
+            if(!target){
+              camera.x = 0; camera.y = 0; camera.z = 100;
+            }else{
+              camera.following = target;
+              camera.xOffset = xOffset;
+              camera.yOffset = yOffset;
+              camera.zOffset = zOffset;
+              camera.x = target.x + (xOffset || 0);
+              camera.y = target.y + (yOffset || 0);
+              camera.z = target.z + (zOffset || 0);
+            };
+          },
+          //if you want to use camera controls, call this instead of engine.render.all()
+          update: function(){
+            if(camera.following !== "none"){
+              camera.follow(camera.following, camera.xOffset, camera.yOffset, camera.zOffset);
+            };
+            engine.render.update(camera.game, camera.scene.render.entities, -camera.x, -camera.y);
+          },
         };
-        this.x = target.x + (xOffset || 0);
-        this.y = target.y + (yOffset || 0);
-        this.z = target.z + (zOffset || 0);
+        camera.scene.camera = camera;
+        return camera;
       },
-      //if you want to use camera controls, call this instead of engine.render.all()
-      update: function(){
-        engine.render.all(-this.x, -this.y);
-      },
-    },
+    },//camera
 
     sort: function(collection){
       //sort by z-axis
@@ -508,19 +545,19 @@ const engine = {
 
     },
     //pass an array of entities with render components to draw all of them to the screen
-    update: function(game, collection){
+    update: function(game, collection, xOffset, yOffset){
       engine.render.cls(game, game.settings.defaultBgColor);
       for(i in collection){
         let current = collection[i];
         switch(current.render.type){
           case "image":
-            engine.render.image(game, current.render.asset, current.x, current.y);
+            engine.render.image(game, current.render.asset, current.x + (xOffset || 0), current.y + (yOffset || 0));
             break;
           case "sprite":
-            engine.render.spr(game, current.render.asset, current.render.sprite, current.x, current.y);
+            engine.render.spr(game, current.render.asset, current.render.sprite, current.x + (xOffset || 0), current.y + (yOffset || 0));
             break;
           case "map":
-            engine.render.map(game, current);
+            engine.render.map(game, current, current.x + (xOffset || 0), current.y + (yOffset || 0));
             break;
           default:
             console.log("render.type not found for ", collection[i]);
@@ -870,6 +907,7 @@ const engine = {
         setMode: function(mode){
           inputManager.modeToSet = mode;
         },
+        update: function(){engine.input.update(inputManager)},
       };
       document.body.setAttribute("onkeydown", "inputManager.keyDown(event)");
       document.body.setAttribute("onkeyup", "inputManager.keyUp(event)");

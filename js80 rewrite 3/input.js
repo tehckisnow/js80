@@ -45,7 +45,8 @@ function getPoint(dir, tileSize){
 function collisionTest(map, layer, entity, dir, group){
   let direction = getPoint(dir, 16);
   if(engine.collision.checkPoint(entity.x + direction.x, entity.y + direction.y, group, "physical")){return true};
-  let position = position.get(game1.scenes.current.map.current, player1);
+  let position = camera.position.get(player1);
+//  position.get(game1.scenes.current.map.current, player1);
   if(engine.collision.checkCollisionLayer(map, layer, position.x + direction.x, position.y + direction.y)){return true};
   return false;
 };//collision()
@@ -64,6 +65,8 @@ function step(entity, dir, distance){
       entity.justFinished = false;
       inputManager.setMode(playMode);
       let center = getPoint("center", 16);
+      //checkExit(currentMap, 2, -currentMap.x + player1.x + center.x, -currentMap.y + player1.y + center.y);
+      let currentMap = game1.scenes.current.map.current;
       checkExit(currentMap, 2, -currentMap.x + player1.x + center.x, -currentMap.y + player1.y + center.y);
     };
   };
@@ -74,24 +77,14 @@ function move(entity, dir, distance){
     let direction = convertDirection(dir);
     let x = direction.x;
     let y = direction.y;
-    moveWorld(x, y, entitiesToMove);
+    entity.x += x;
+    entity.y += y;
+    //moveWorld(x, y, game1.scenes.current.entities);
   //};
 };//move()
 
-function moveWorld(x, y, entities){
-  //!replace this later!
-  let things = [currentMap];
-  for(i in entities){
-    things.push(entities[i]);
-  };
-  for(buh in things){
-    //! changed these to negative for tile-based movement
-    things[buh].x += -x + runModifier;
-    things[buh].y += -y + runModifier;
-  };
-};
-
 let inputManager = engine.input.newManager(game1);
+game1.input = inputManager;
 let playMode = inputManager.newMode("play");
 let steppingMode = inputManager.newMode("stepping");
 
@@ -100,8 +93,6 @@ readMode.newKey(" ", function(){
   //advance the textbox
   dialogue.advance(inputManager, playMode);
 });
-
-playMode.newKey("Shift", function(){}, false);
 
 playMode.newKey("a", function(){
   player1.facing = "left";
@@ -134,7 +125,9 @@ playMode.newKey("s", function(){
 playMode.newKey(" ", function(){
   //check map for interaction
   let dir = getPoint(player1.facing, 16);
-  let pos = player1.getPosition();
+  
+  let pos = camera.position.get(player1);//player1.getPosition();
+
   talk(player1.x + dir.x, player1.y + dir.y, generatedNpcs);
   inspectMapObject(pos.x + dir.x, pos.y + dir.y, mapAsset, 2);
 }, false);

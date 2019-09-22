@@ -1,3 +1,13 @@
+//TODO:
+//organize and reintroduce the missing functions from game.js as a single module
+//move uiController out of textbox so that menu can use it, too
+//write system for getting Tiled objectLayer properties and use in asset creation (instead of checking map layers while the game is running)
+//    talk(), inspectMapObject(), and checkExit() will be based on this
+//fix spriteSheet (breaks if dimensions are not manually set)
+//asset preloader
+//finish npc behavior system
+//menu system
+
 //game data
 //  this game's color reference;
 let colors = [ //darkest to lightest
@@ -21,19 +31,14 @@ let dialogueTheme = engine.ui.textbox.newTheme({
   overflowIconColor: colors[0],
 });
 
-let spriteSheetEntity = scene1.newEntity();
-let spriteSheet1 = spriteSheetEntity.add.assets(scene1, "spriteSheet", "sheet1.png", 16, 16);
-
-
-let tileSetEntity1 = scene1.newEntity();
-let tileSet1 = tileSetEntity1.add.assets(scene1, "tileSet", "tileset1.png", 16);
-
+let spriteSheet1 = engine.assets.spriteSheet(scene1, "sheet1.png", 16, 16);
+let tileSet1 = engine.assets.tileSet(scene1, "tileset1.png", 16);
 let mapEntity1 = scene1.newEntity();
-
-let mapData = [TileMaps.testMap1, TileMaps.map1, TileMaps.map2];
+let mapData = [TileMaps.testMap1];
 let mapAsset = mapEntity1.add.assets(scene1, "map", mapData[0], mapData[0].width, tileSet1, 2, -1);
 mapEntity1.add.render(scene1, "map", mapAsset, 0, 0, 0);
 mapAsset.layers[1].visible = false;
+scene1.map.setCurrent(mapEntity1);
 
 //find player starting position
 function getStart(layer){
@@ -51,65 +56,43 @@ function getStart(layer){
 };//getStart()
 let startingPosition = getStart(2);
 
+let player1 = npc.new(scene1, startingPosition.x, startingPosition.y, 1, ["woah"], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
+
+let camera = engine.render.camera.new(scene1);
 let centerPosition = {x: 8 * 16, y: 6 * 16};
+camera.follow(player1, -centerPosition.x, -centerPosition.y);
 
-let player1 = npc.new(scene1, centerPosition.x, centerPosition.y, 1, ["woah"], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
+//!generate npcs from map instead
+// let mapNpcs = [{x: 6 * 16, y: 4 * 16, z: 1, text: ["holla!"]}, {x: 16 * 16, y: 4 * 16, z: 1, text: ["hiya!", "later!"]}, {x: 7 * 16, y: 4 * 16, z: 10, text: ["I am at z-level 10!"]}, {x: 8 * 16, y: 4 * 16, z: -1, text: ["I am at z-level -1!"]}];
+// function genNpcs(list){
+//   let npcs = [];
+//   for(i in mapNpcs){
+//     npcs.push(npc.new(scene1, mapNpcs[i].x, mapNpcs[i].y, mapNpcs[i].z, mapNpcs[i].text, spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []));
+//   };
+//   return npcs;
+// };
+// let generatedNpcs = genNpcs(mapNpcs);
 
-let position = {
-  get: function(map, entity){
-    return {x: -map.x + entity.x, y: -map.y + entity.y};
-  },
-  set: function(map, entity, x, y){
-    entity.x = -x + entity.x;
-    entity.y = -y + entity.y;
-  },
-};
+//!!!! use these entries from game.js to rewrite the following
 
-let mapNpcs = [{x: 6 * 16, y: 4 * 16, z: 1, text: ["holla!"]}, {x: 16 * 16, y: 4 * 16, z: 1, text: ["hiya!", "later!"]}, {x: 7 * 16, y: 4 * 16, z: 10, text: ["I am at z-level 10!"]}, {x: 8 * 16, y: 4 * 16, z: -1, text: ["I am at z-level -1!"]}];
-function genNpcs(list){
-  let npcs = [];
-  for(i in mapNpcs){
-    npcs.push(npc.new(scene1, mapNpcs[i].x, mapNpcs[i].y, mapNpcs[i].z, mapNpcs[i].text, spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []));
-  };
-  return npcs;
-};
-
-let imageTest = scene1.newEntity(0, 0, -20);
-let image111 = imageTest.add.assets(game1, "image", "tileset1.png");
-imageTest.add.render(scene1, "image", image111, 0, 0);
-
-let generatedNpcs = genNpcs(mapNpcs);
-
-scene1.map.setCurrent(mapEntity1);
-
-position.set(scene1.map.current, startingPosition.x, startingPosition.y);
-
-//!mapEffects (will rename mapEvents)
+//!mapEvents (previously called mapEffects)
 
 //!talk()
-
 //!inspectMapObject()
+//!getProperties()
+//!checkExit()
+function checkExit(){};
+//!exit()
 
 //!uiController
 //!dialogue
 
-//!getProperties()
-
-//!checkExit()
-
 //!effects
-
-//!exit()
 
 //!audioController
 //!music and sfx assets
 
 game1.frame = function(){
-
-  engine.input.update(inputManager);
-  
   game1.update();
-
 };//game1.frame()
-
 game1.start();

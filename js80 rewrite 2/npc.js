@@ -1,5 +1,7 @@
 //let npcEventManager = engine.events.newEventManager();
+
 let npcEventTimer = engine.timer.newManager();
+
 let npc = {
   new: function(scene, x, y, z, dialogueArray, asset, spriteIndex, anims, collisionWidth, collisionHeight, collisionXOffset, collisionYOffset, tags){
     let npc = scene.newEntity(x, y, z);
