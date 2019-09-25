@@ -1,26 +1,3 @@
-//TODO:
-////move uiController out of textbox so that menu can use it, too
-////write system for getting Tiled objectLayer properties and use in asset creation (instead of checking map layers while the game is running)
-////    talk(), inspectMapObject(), and checkExit() will be based on this
-////organize and reintroduce the missing functions from game.js as a single module
-////make title intro skippable
-////Fade isn't working.  rebuild?
-//revise event system (i have three different implementations here.  consolidate them!)
-//fix spriteSheet (breaks if dimensions are not manually set)
-//asset preloader
-//finish npc behavior system
-//menu system
-//an entity should have a destroy function which will find all of it's components and destroy them, too
-
-//!Do I need a variation of engine.assets.checkMapObject() that will
-//      !return ALL objects that fit the parameters?
-
-//! is newLayer.findProperty redundant now that I have newLayer.checkMapObject?
-
-//! deal with newLayer.mget's first line, "y = y + 16"
-
-//! how to set a tileEvent's desc to a new value?
-//!   change map data? probably
 
 //game data
 //  this game's color reference;
@@ -47,18 +24,32 @@ let dialogueTheme = engine.ui.textbox.newTheme({
   overflowIconColor: colors[0],
 });
 
-let spriteSheet1 = engine.assets.spriteSheet(scene1, "sheet1.png", 16, 16);
-let tileSet1 = engine.assets.tileSet(scene1, "tileset1.png", 16);
+let spriteSheet1 = engine.assets.spriteSheet(scene1, "spritewalk1.png", 16, 16);
+let spriteSheetSoldier = engine.assets.spriteSheet(scene1, "soldierwalk1.png", 16, 16);
+let tileSet1 = engine.assets.tileSet(scene1, "tileset.png", 16);
 let mapEntity1 = scene1.newEntity();
-let mapData = [TileMaps.testMap1];
-let mapAsset = mapEntity1.add.assets(scene1, "map", mapData[0], mapData[0].width, tileSet1, 2, -1);
+let mapData = [TileMaps.demoMap1];
+let mapAsset = mapEntity1.add.assets(scene1, "map", mapData[0], mapData[0].width, tileSet1, 4, -1);
 mapEntity1.add.render(scene1, "map", mapAsset, 0, 0, 0);
-mapAsset.layers[1].visible = false;
+//mapAsset.layers[1].visible = false;
 scene1.map.setCurrent(mapEntity1);
 
 //find player starting position
-let startingPosition = mapAsset.layers[2].findProperty("start");
+let startingPosition = mapAsset.layers[3].findProperty("start");
 let player1 = npc.new(scene1, startingPosition.x, startingPosition.y, 1, ["woah"], spriteSheet1, 0, defaultAnims, 16, 16, 0, 0, []);
+player1.facing = "right";
+player1.y -= 16;
+player1.render.asset = spriteSheetSoldier;
+
+//! not drawing this part on top.  fix
+// let mapEntityTop = scene1.newEntity();
+// let mapAssetTop = mapEntityTop.add.assets(scene1, "map", mapData[0], mapData[0].width, tileSet1, 4, -1);
+// mapAssetTop.layers[0].visible = false;
+// mapAssetTop.layers[1].visible = false;
+// mapAssetTop.layers[2].visible = false;
+// mapAssetTop.layers[3].visible = false;
+// mapAssetTop.layers[4].visible = false;
+// also remove function in update that sets these coordinates to the same as mapEntity1
 
 let camera = engine.render.camera.new(scene1);
 let centerPosition = {x: 8 * 16, y: 6 * 16};
@@ -78,7 +69,7 @@ function generateNpcsFromMap(map, layer, data, TiledOffset){
   return npcs;
 };//generateNpcs()
 let npcData = [{text: ["holla!"], interaction: function(){}}, {text:["hiya!", "later!"], interaction: function(){}}, {text: ["I am at z-level 10!"], interaction: function(){}}];
-let generatedNpcs = generateNpcsFromMap(scene1.map.current, 2, npcData, -16);
+let generatedNpcs = generateNpcsFromMap(scene1.map.current, 3, npcData, -16);
 
 function checkNpcs(list, x, y, tag){
   let result = engine.collision.checkPoint(x, y, list, tag);

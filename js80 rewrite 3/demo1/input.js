@@ -47,7 +47,7 @@ function collisionTest(map, layer, entity, dir, group, tag){
 };//collision()
 
 function step(entity, dir, distance){
-  if(collisionTest(game1.scenes.current.map.current.assets[0], 1, entity, dir, game1.scenes.current.collision.entities, "physical")){return};
+  if(collisionTest(game1.scenes.current.map.current.assets[0], 4, entity, dir, game1.scenes.current.collision.entities, "physical")){return};
   inputManager.setMode(steppingMode);
   entity.justFinished = true;
   entity.distanceRemaining = distance;
@@ -63,7 +63,7 @@ function step(entity, dir, distance){
       inputManager.setMode(playMode);
       let center = getPoint("center", 16);
       let currentMap = game1.scenes.current.map.current;
-      checkExit(game1, currentMap, 2, player1.x + center.x, player1.y + center.y, -16);
+      checkExit(game1, currentMap, 3, player1.x + center.x, player1.y + center.y, -16);
       //checkMapEvents();
     };
   };
@@ -123,8 +123,8 @@ playMode.newKey("s", function(){
 playMode.newKey(" ", function(){
   //check map for interaction
   let dir = getPoint(player1.facing, 16);
-  checkMapDescription(game1.scenes.current.map.current, 2, player1.x + dir.x, player1.y + dir.y);
-  checkMapEvents(game1.scenes.current.map.current, 2, player1.x + dir.x, player1.y + dir.y);  
+  checkMapDescription(game1.scenes.current.map.current, 3, player1.x + dir.x, player1.y + dir.y);
+  checkMapEvents(game1.scenes.current.map.current, 3, player1.x + dir.x, player1.y + dir.y);  
   checkNpcs(generatedNpcs, player1.x + dir.x, player1.y + dir.y, "physical");
 }, false);
 

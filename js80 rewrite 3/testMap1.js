@@ -65,6 +65,11 @@
                          "name":"facing",
                          "type":"string",
                          "value":"up"
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"int",
+                         "value":0
                         }],
                  "rotation":0,
                  "type":"",
@@ -98,6 +103,11 @@
                          "name":"facing",
                          "type":"string",
                          "value":"up"
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"int",
+                         "value":2
                         }],
                  "rotation":0,
                  "type":"",
@@ -131,6 +141,11 @@
                          "name":"facing",
                          "type":"string",
                          "value":"down"
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"int",
+                         "value":1
                         }],
                  "rotation":0,
                  "type":"",
@@ -164,6 +179,11 @@
                          "name":"facing",
                          "type":"string",
                          "value":"down"
+                        }, 
+                        {
+                         "name":"id",
+                         "type":"int",
+                         "value":3
                         }],
                  "rotation":0,
                  "type":"",
@@ -184,7 +204,7 @@
                          "value":"Just a crate."
                         }, 
                         {
-                         "name":"effect",
+                         "name":"event",
                          "type":"int",
                          "value":0
                         }],
@@ -207,7 +227,7 @@
                          "value":"Just a crate."
                         }, 
                         {
-                         "name":"effect",
+                         "name":"event",
                          "type":"int",
                          "value":1
                         }],
@@ -268,10 +288,10 @@
                         {
                          "name":"desc",
                          "type":"string",
-                         "value":"Just a crate."
+                         "value":"Just a crate"
                         }, 
                         {
-                         "name":"effect",
+                         "name":"event",
                          "type":"int",
                          "value":0
                         }],
@@ -291,12 +311,7 @@
                         {
                          "name":"desc",
                          "type":"string",
-                         "value":"Just a crate."
-                        }, 
-                        {
-                         "name":"effect",
-                         "type":"int",
-                         "value":0
+                         "value":"Just a crate"
                         }],
                  "rotation":0,
                  "type":"",
@@ -749,9 +764,32 @@
                  "name":"",
                  "properties":[
                         {
-                         "name":"desc",
+                         "name":"dialogue",
                          "type":"string",
-                         "value":"Hi!"
+                         "value":"hey, there!"
+                        }, 
+                        {
+                         "name":"entity",
+                         "type":"int",
+                         "value":1
+                        }],
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":208,
+                 "y":80
+                }, 
+                {
+                 "gid":43,
+                 "height":16,
+                 "id":38,
+                 "name":"",
+                 "properties":[
+                        {
+                         "name":"dialogue",
+                         "type":"string",
+                         "value":"woah!"
                         }, 
                         {
                          "name":"entity",
@@ -762,8 +800,8 @@
                  "type":"",
                  "visible":true,
                  "width":16,
-                 "x":160,
-                 "y":256
+                 "x":64,
+                 "y":128
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -784,7 +822,7 @@
          "y":0
         }],
  "nextlayerid":5,
- "nextobjectid":38,
+ "nextobjectid":39,
  "orientation":"orthogonal",
  "properties":[
         {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.2.4" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="38">
+<map version="1.2" tiledversion="1.2.4" orientation="orthogonal" renderorder="right-down" width="20" height="20" tilewidth="16" tileheight="16" infinite="0" nextlayerid="5" nextobjectid="39">
  <properties>
   <property name="event" type="int" value="0"/>
   <property name="expired" type="int" value="0"/>
@@ -62,6 +62,7 @@
     <property name="destinationY" type="int" value="288"/>
     <property name="exit" type="int" value="0"/>
     <property name="facing" value="up"/>
+    <property name="id" type="int" value="0"/>
    </properties>
   </object>
   <object id="2" gid="3" x="208" y="48" width="16" height="16">
@@ -70,6 +71,7 @@
     <property name="destinationY" type="int" value="288"/>
     <property name="exit" type="int" value="0"/>
     <property name="facing" value="up"/>
+    <property name="id" type="int" value="2"/>
    </properties>
   </object>
   <object id="3" gid="3" x="64" y="304" width="16" height="16">
@@ -78,6 +80,7 @@
     <property name="destinationY" type="int" value="64"/>
     <property name="exit" type="int" value="0"/>
     <property name="facing" value="down"/>
+    <property name="id" type="int" value="1"/>
    </properties>
   </object>
   <object id="4" gid="3" x="240" y="304" width="16" height="16">
@@ -86,18 +89,19 @@
     <property name="destinationY" type="int" value="64"/>
     <property name="exit" type="int" value="0"/>
     <property name="facing" value="down"/>
+    <property name="id" type="int" value="3"/>
    </properties>
   </object>
   <object id="9" gid="59" x="48" y="144" width="16" height="16">
    <properties>
     <property name="desc" value="Just a crate."/>
-    <property name="effect" type="int" value="0"/>
+    <property name="event" type="int" value="0"/>
    </properties>
   </object>
   <object id="11" gid="59" x="240" y="256" width="16" height="16">
    <properties>
     <property name="desc" value="Just a crate."/>
-    <property name="effect" type="int" value="1"/>
+    <property name="event" type="int" value="1"/>
    </properties>
   </object>
   <object id="12" gid="42" x="80" y="96" width="16" height="16">
@@ -113,14 +117,13 @@
   </object>
   <object id="15" gid="2" x="64" y="64" width="16" height="16">
    <properties>
-    <property name="desc" value="Just a crate."/>
-    <property name="effect" type="int" value="0"/>
+    <property name="desc" value="Just a crate"/>
+    <property name="event" type="int" value="0"/>
    </properties>
   </object>
   <object id="16" gid="2" x="112" y="64" width="16" height="16">
    <properties>
-    <property name="desc" value="Just a crate."/>
-    <property name="effect" type="int" value="0"/>
+    <property name="desc" value="Just a crate"/>
    </properties>
   </object>
   <object id="17" gid="2" x="112" y="112" width="16" height="16">
@@ -237,9 +240,15 @@
     <property name="effect" type="int" value="0"/>
    </properties>
   </object>
-  <object id="37" gid="41" x="160" y="256" width="16" height="16">
+  <object id="37" gid="41" x="208" y="80" width="16" height="16">
    <properties>
-    <property name="desc" value="Hi!"/>
+    <property name="dialogue" value="hey, there!"/>
+    <property name="entity" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="38" gid="43" x="64" y="128" width="16" height="16">
+   <properties>
+    <property name="dialogue" value="woah!"/>
     <property name="entity" type="int" value="0"/>
    </properties>
   </object>

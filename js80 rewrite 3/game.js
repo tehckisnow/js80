@@ -125,10 +125,10 @@ function talk(x, y, npcs){
   };
 };//talk()
 
-function inspectMapObject(x, y, map, layer){
+function inspectMapObject(x, y, mapAsset, layer, TiledOffset){
   //Tiled Offset
-  y = y + 16;
-  let mapObjects =  map.layers[layer].objects;
+  y = y + TiledOffset; //16;
+  let mapObjects =  mapAsset.layers[layer].objects;
   for(g in mapObjects){
     if(mapObjects[g].x < x && mapObjects[g].x + mapObjects[g].width > x && mapObjects[g].y < y && mapObjects[g].y + mapObjects[g].height > y){
       if(mapObjects[g].properties){
