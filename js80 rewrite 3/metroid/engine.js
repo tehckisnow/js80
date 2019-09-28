@@ -486,7 +486,14 @@ const engine = {
     },
     //manually draw a sprite from a spritesheet to the screen
     spr: function(game, spriteSheet, spr, x, y, flipH, flipV){
-      //if(flipH !== undefined){game.settings.canvas.ctx.scale(flipH, flipV)};
+      game.settings.canvas.ctx.save();
+      if(flipH !== undefined){
+        game.settings.canvas.ctx.scale(flipH, 1);
+        x = -x - spriteSheet.tileSize;
+      };
+      // if(flipV !== undefined){
+      //   y = -y - spriteSheet.tileSize;
+      // };
       game.settings.canvas.ctx.drawImage(
         spriteSheet,
         spriteSheet.sprites[spr].x,
@@ -498,6 +505,7 @@ const engine = {
         spriteSheet.sprites[spr].width * game.settings.renderScale,
         spriteSheet.sprites[spr].height * game.settings.renderScale
       );
+      game.settings.canvas.ctx.restore();
     },
     //render a map entity
     map: function(game, mapEntity, xOff, yOff, zOff){

@@ -1,3 +1,8 @@
+//TODO: djfkdjk
+//instead of using line numbers to reference issues, use commented issue numbers
+
+//[I320] this is an example issue
+//? fjkdjfkd
 
 //game data
 //  this game's color reference;
@@ -130,7 +135,12 @@ let dialogue = scene1.ui.manager.textbox.new("", dialogueTheme);
 //!Rename this (and in input.js)  I need checkMapInteractions as well
 let mapEvents = [
   function(){console.log("event 0!")}, 
-  function(){dialogue.open("You have found the treasure!", function(){inputManager.setMode(readMode)}); inputManager.setMode(readMode); mapEvents[1] = function(){}},
+  function(){
+    dialogue.open("You have found the treasure!", function(){inputManager.setMode(readMode)}); inputManager.setMode(readMode); 
+    mapEvents[1] = function(){};
+    //!the following doesn't work right
+    //generatedNpcs[1].dialogue = ["Hey, give that back!"];
+  },
   function(){console.log("test")},
 ];
 function checkMapEvents(map, layer, x, y){
