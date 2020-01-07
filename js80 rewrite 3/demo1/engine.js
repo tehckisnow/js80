@@ -1064,6 +1064,7 @@ const engine = {
             return textbox;
           },
         },
+        //! menu is out of date!
         menu: {
           new: function(text, options, theme){
             let menu = engine.ui.menu.new(text, options, theme);
@@ -1255,7 +1256,167 @@ const engine = {
         engine.ui.textbox.draw(game, textbox);
       },
     },//textbox
-    menu: {
+
+    menu:{
+      manager: function(game){
+        let newManager = {};
+        newManager.game = game;
+        newManager.menus = [];
+        newManager.getCurrent = function(){
+          return newManager.menus[newManager.menus.length - 1];
+        };
+        newManager.newMenu = function(header, options, theme, themeMods){
+          let newMenu = engine.ui.menu.new(newManager.game, header, options, indicator, theme, themeMods);
+          newManager.menus.push(newMenu);
+          return newMenu;
+        };
+        newManager.addMenu = function(menu){
+          newManager.menus.push(menu);
+        };
+        newManager.closeMenu = function(){
+          newManager.menus.pop();
+        };
+        newManager.drawMenus = function(){
+          for(h in newManager.menus){
+            newManager.menus[h].draw(newManager.game);
+          };
+        };
+        return newManager;
+      },
+      new: function(game, header, options, theme, themeMods){
+        //!make menu an entity with z-value?
+        let menu = {};
+        menu.currentOption = 0;
+        menu.game = game;
+        menu.header = header || "";
+        menu.theme = theme;
+        menu.active = false;
+        // for(i in themeMods){
+        //   menu.theme.themeMods[i] = themeMods[i];
+        // };
+        menu.updateOptions = function(){
+          let leftMargin = menu.theme.leftMargin || 0;
+          let topMargin = menu.theme.topMargin || 0;
+          let verticalSpacing = menu.theme.verticalSpacing || menu.theme.fontSize || 10;
+          let headerSpace = verticalSpacing;
+          if(menu.header == ""){headerSpace = 0};
+          let currentPosition = 0;
+          menu.options = [];
+          for(i in options){
+            let curr = options[i];
+            //! if vertical:
+            let currentY = (verticalSpacing * currentPosition) + topMargin + headerSpace + menu.theme.spacingAfterHeader;
+            let currentX = leftMargin;
+            menu.options.push(engine.ui.menu.newOption(curr.text, curr.effect, curr.closePrevMenu, curr.theme, currentX, currentY));
+            currentPosition++;
+          };
+        };//menu.updateOptions()
+        menu.updateOptions();
+        
+        menu.draw = function(game){
+          if(menu.theme.bgColor !== ""){
+            engine.render.rect(game, menu.theme.x, menu.theme.y, menu.theme.width, menu.theme.height, menu.theme.bgColor);
+          };
+          if(menu.theme.border !== ""){
+            engine.render.rectb(game, menu.theme.x, menu.theme.y, menu.theme.width, menu.theme.height, menu.theme.borderColor);
+          };
+          //! bgImage
+          if(menu.theme.bgImage){};
+          //! if vertical (this may not be necessary)
+          if(menu.header !== ""){
+            engine.render.text(game, menu.header, menu.theme.x + menu.theme.headerX, menu.theme.y + menu.theme.headerY, menu.theme.headerColor, menu.theme.headerFont, menu.theme.headerFontSize);
+          };
+          for(i in menu.options){
+            let curr = menu.options[i];
+            engine.render.text(game, curr.text, menu.theme.x + curr.x, menu.theme.y + curr.y, curr.theme.color, curr.theme.font, curr.theme.fontSize);
+          };
+          //!
+          if(menu.theme.drawIndicator){
+            menu.theme.indicator.draw(game, menu.theme.x + menu.options[menu.currentOption].x + menu.theme.indicator.xOffset, menu.theme.y + menu.options[menu.currentOption].y + menu.theme.indicator.yOffset, 10, 'white');
+          };
+        };//menu.draw()
+        menu.open = function(){
+          menu.active = true;
+        };//menu.open()
+        menu.close = function(){
+          menu.active = false;
+        };//menu.close()
+        menu.next = function(){
+          menu.currentOption++;
+          //!if loop
+          if(menu.currentOption > menu.options.length - 1){
+            menu.currentOption = 0;
+          };
+        };//menu.next()
+        menu.prev = function(){
+          menu.currentOption--;
+          //! if loop
+          if(menu.currentOption < 0){
+            menu.currentOption = menu.options.length - 1;
+          };
+        };//menu.prev()
+        menu.select = function(){
+          menu.options[menu.currentOption].effect();
+        };//menu.select()
+        menu.update = function(game){
+          if(menu.active){
+            //menu.updateOptions();//! remove this? (only update when menu changes?)
+            menu.draw(game);
+          };
+        };//menu.update()!
+        return menu;
+      },//new()
+      newOption: function(text, effect, closePrevMenu, theme, x, y){
+        let option = {};
+        option.text = text || "-";
+        option.effect = effect || function(){};
+        option.closePrevMenu = closePrevMenu || false;
+        //! set default option theme!
+        option.theme = {
+          color: theme.fontColor,
+          font: theme.font,
+          fontSize: theme.fontSize,
+        };
+        for(i in theme){
+          option.theme[i] = theme[i];//!check this
+        };
+        option.x = x || 0;
+        option.y = y || 0;
+        return option;
+      },//newOption
+      newIndicator: function(funct, xOffset, yOffset){
+        let indicator = {};
+        indicator.currentOption = 0;
+        indicator.x = 0;
+        indicator.y = 0;
+        indicator.optionOffsetX = xOffset || 0;
+        indicator.optionOffsetY = yOffset || 0;
+        indicator.funct = funct;
+        indicator.draw = function(){
+          //calculate relative position and apply x/y offset
+          //!
+    
+        };
+        return indicator;
+      },//newIndicator()
+      newMenuTheme: function(propertiesObject){
+        //!add functionality to check game for default theme and then store new theme in game data
+        let theme = {}; //! put defaults here
+        for(g in propertiesObject){
+          theme[g] = propertiesObject[g];
+        };
+        return theme;
+      },
+      newOptionTheme: function(){},
+      //defaultIndicator: engine.ui.menu.newIndicator(function(){//draw arrow//!}, -10, -10),
+      update: function(game){
+        //get current scene's list of active menus and iterate through
+    
+      },//update()
+    },//menu
+
+
+    oldmenu: {
       new: function(text, options, theme){
         let newMenu = {};
         newMenu.type = "menu";

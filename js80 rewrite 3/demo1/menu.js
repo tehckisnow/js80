@@ -100,6 +100,7 @@ menu1.addOption("items", function(){console.log("items")});
 
 function click(){
   menu1.open();
+  console.log("clicked");
 };
 
 document.body.addEventListener("click", click);
