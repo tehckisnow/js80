@@ -10,9 +10,9 @@ const engine = {
     marginTop: 40,
     defaultColor: "gray",
     defaultBgColor: "black",
-    defaultFont: "Arial",
+    defaultFont: "Ariel",
     defaultFontColor: "white",
-    defaultFontSize: "12px",
+    defaultFontSize: "14px",
     frameRate: 60,
     defaultTileSize: 16,
     renderScale: 1,
@@ -596,7 +596,7 @@ const engine = {
     text: function(game, text, x, y, color, font, fontSize){
       game.canvas.ctx.beginPath();
       //game.canvas.ctx.textAlign = "center";
-      game.canvas.ctx.font = (fontSize || game.settings.defaultFontSize) + " " + (font || game.settings.defaultFont);
+      game.canvas.ctx.font = (fontSize || game.settings.defaultFontSize) + "px " + (font || game.settings.defaultFont);
       game.canvas.ctx.fillStyle = color || game.settings.defaultFontColor;
       game.canvas.ctx.fillText(text || "", x || 0, y || 0);
     },
@@ -1096,7 +1096,7 @@ const engine = {
         width: 200, height: 200,
         bgColor: "blue", bgImage: "",
         border: true, borderColor: "white",
-        font: "ariel", fontSize: "14", fontColor: "white", lines: 4,
+        font: "Ariel", fontSize: "14", fontColor: "white", lines: 4,
         text: "", charLength: 30, //!SET THIS!
         vertOffset: 10, horOffset: 20,
         handleOverflow: true, overflowIcon: "", overflowIconOffset: {x: 20, y: 15}, overflowIconColor: "white",
@@ -1212,7 +1212,7 @@ const engine = {
             //!textbox.currentLine
             if(i < textbox.lines){
               //engine.render.text(game, textbox.textArray[i], textbox.x + textbox.horOffset, textbox.y + (i * vertOffset) + textbox.vertOffset, textbox.fontColor, textbox.fontSize, textbox.font);
-              engine.render.text(game, currentText[i], textbox.x + textbox.horOffset, textbox.y + (i * vertOffset) + textbox.vertOffset, textbox.fontColor, textbox.fontSize, textbox.font);
+              engine.render.text(game, currentText[i], textbox.x + textbox.horOffset, textbox.y + (i * vertOffset) + textbox.vertOffset, textbox.fontColor, textbox.font, textbox.fontSize);
             };
           };
           if(textbox.handleOverflow && textbox.currentLine + textbox.lines < textbox.textArray.length){

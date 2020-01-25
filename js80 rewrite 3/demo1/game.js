@@ -1,4 +1,23 @@
 //TODO: djfkdjk
+//input system need buttonP() type function
+////fix font
+//eliminate delay in step when changing direction
+//change step() so that entity first turns, then moves, so that tapping can rotate character
+//    (this will be dependant on rewriting the input system first)
+////speed up room transitions
+//test map switching (I think this works but I don;t remember testing it)
+////improve font (bold, larger, fix position, darker color?)
+//scale size
+//improve pixel clarity (???)
+//pressing enter on title screen multiple times resets transition instead of speeding it up
+//implement animated maptiles
+//!implement basic menu system
+//implement running
+//build basic demo
+//I think I still need to support multi-line spritesheets
+//does this engine currently support non-square (rectangular) sprites? (aside from using tile method)
+//add toggle-able setting for pixel graphics, as seen on;
+//    https://developer.mozilla.org/en-US/docs/Games/Techniques/Crisp_pixel_art_look
 //instead of using line numbers to reference issues, use commented issue numbers
 
 //[I320] this is an example issue
@@ -25,8 +44,9 @@ let doorSfx = scene1.audio.manager.newTrack("sfx", "punch.wav");
 let dialogueTheme = engine.ui.textbox.newTheme({
   x: 10, y: 150, height: game1.settings.height - 160, width: game1.settings.width - 20,
   bgColor: colors[3], borderColor: colors[1], fontColor: colors[0],
-  charLength: 50, vertOffset: 10, lines: 2,
+  charLength: 45, vertOffset: 15, horOffset: 10, lines: 2,
   overflowIconColor: colors[0],
+  font: 'ebrima',
 });
 
 let spriteSheet1 = engine.assets.spriteSheet(scene1, "spritewalk1.png", 16, 16);
@@ -107,13 +127,13 @@ let exits = [mapEntity1];
 function exit(game, map, x, y, facing){
   playMode.disable();
   //fade to black
-  let transitionFade1 = game.scenes.current.ui.manager.effect.new("fade", game1, "black", 100, "to");
+  //let transitionFade1 = game.scenes.current.ui.manager.effect.new("fade", game1, "black", 50, "to");
   //transitionFade1.start();
-  scene1Fade.start("black", 100, 1);
+  scene1Fade.start("black", 40, 1);
   //sound effect
   doorSfx.play();
   player1.behavior.idle();
-  game.scenes.current.timer.manager.timer(100, function(){
+  game.scenes.current.timer.manager.timer(60, function(){
     player1.x = 0; player1.y = 0;
     //set map
     //  exits[map]
@@ -123,11 +143,11 @@ function exit(game, map, x, y, facing){
     player1.x = x; player1.y = y; player1.facing = facing || "down";
     //fade back
     //let transitionFade2 = game.scenes.current.ui.manager.effect.new("fade", game1, "black", 100, "from");
-    scene1Fade.start("black", 100, -1);
+    scene1Fade.start("black", 60, -1);
     //check map events
 
   });
-  game.scenes.current.timer.manager.timer(150, function(){
+  game.scenes.current.timer.manager.timer(100, function(){
     inputManager.currentMode.enable();
   });
 };//exit()
@@ -166,7 +186,7 @@ scene1Fade = scene1.ui.manager.effect.new("fade", game1, "black", 100, 1);
 
 let music1 = scene1.audio.manager.newTrack("music", "music.mp3");
 
-let mainMenu = scene1.ui.manager.menu.new("Menu", [{text: "Status", effect: function(){console.log("Status")}},{text: "items", effect: function(){console.log("items")}}]);
+//let mainMenu = scene1.ui.manager.menu.new("Menu", [{text: "Status", effect: function(){console.log("Status")}},{text: "items", effect: function(){console.log("items")}}]);
 
 let cow = {
   startTime: 100,

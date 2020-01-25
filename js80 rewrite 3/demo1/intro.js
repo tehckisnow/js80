@@ -60,10 +60,8 @@ titleScene.events.new("start", function(){titleAnimation()});
 titleScene.events.pullTrigger("start");
 
 function testCheck(test, ifTrue, ifFalse){
-  if(test()){ifTrue()}else{ifFalse()};
-  //test() ? ifTrue() : ifFalse(); //!why won't this work?
+  return test() ? ifTrue() : ifFalse();
 };
-
 //replace makeEvent with
 // function eventCheck(eventManager, trigger, test, ifTrue, ifFalse){
 //   eventManager.events.new(trigger, function(){testCheck(test, ifTrue, ifFalse)});

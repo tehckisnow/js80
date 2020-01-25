@@ -90,7 +90,6 @@ startMode.newKey("Enter", function(){
     //fade from black
     scene1Fade.start("black", 100, -1);
   });
-
 });
 
 let readMode = inputManager.newMode("read");
