@@ -715,6 +715,47 @@ const engine = {
       };
       return newComponent;
     },
+
+    //!this structure is different from sprite animations
+    //each animation holds anim logic instead of the animation component
+    //this is to facilitate multiple simultaneous animations for the map
+    newMapAnimationComponent: function(){
+      let component = {};
+      component.anims = [];
+      component.activeAnims = [];
+      component.newAnim = function(name, time, frames, tiles){
+        let anim = {};
+        anim.time = time;
+        anim.name = name;
+        anim.frames = frames;
+        anim.currentFrame = 0;
+        anim.tiles = tiles;
+        anim.frameRate = time;
+        anim.timer = time;
+        component.anims.push(anim);
+        return anim;
+      };
+      component.update = function(){
+        for(a in component.activeAnims){
+          let curr = component.activeAnims[a];
+          curr.timer--;
+          if(curr.timer < 0){
+            curr.timer = curr.frameRate;
+            curr.currentFrame++;
+            if(curr.currentFrame > curr.frames.length -1){
+              curr.currentFrame = 0;
+            };
+            for(t in tiles){
+              //edit map tile tiles[t] to have tile curr.frames[curr.currentFrame];
+              //tiles[t]
+              //curr.frames[curr.currentFrame];
+            };
+          };
+        };
+      };
+      return component;
+    },
+
     update: function(collection){
       for(i in collection){
         collection[i].animation.animate();

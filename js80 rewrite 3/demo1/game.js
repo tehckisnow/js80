@@ -5,6 +5,7 @@
 //change step() so that entity first turns, then moves, so that tapping can rotate character
 //    (this will be dependant on rewriting the input system first)
 ////speed up room transitions
+//map tile animations
 //test map switching (I think this works but I don;t remember testing it)
 ////improve font (bold, larger, fix position, darker color?)
 //scale size
