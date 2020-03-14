@@ -1,5 +1,5 @@
 //TODO: djfkdjk
-//input system need buttonP() type function
+////input system need buttonP() type function
 ////fix font
 //eliminate delay in step when changing direction
 //change step() so that entity first turns, then moves, so that tapping can rotate character
@@ -188,6 +188,22 @@ scene1Fade = scene1.ui.manager.effect.new("fade", game1, "black", 100, 1);
 let music1 = scene1.audio.manager.newTrack("music", "music.mp3");
 
 //let mainMenu = scene1.ui.manager.menu.new("Menu", [{text: "Status", effect: function(){console.log("Status")}},{text: "items", effect: function(){console.log("items")}}]);
+// let mainMenuTheme = engine.ui.menu.newMenuTheme({
+//   bgColor: "blue",
+//   bgImage: "",
+//   border: "",
+// });
+// let mainMenuMan = engine.ui.menu.manager(game1);
+// mainMenuMan.newMenu("Menu", []);
+
+let mainMenuTheme = engine.menu.newTheme({});
+let mainMenuManager = engine.menu.newManager(game1);
+let mainMenuOptions = [
+  {text: "new", effect: function(){console.log('new')}},
+  {text: "load", effect: function(){console.log('load')}},
+  {text: "quit", effect: function(){console.log('quit')}}
+];
+mainMenuManager.newMenu('Main Menu', mainMenuOptions, mainMenuTheme);
 
 let cow = {
   startTime: 100,
@@ -219,7 +235,13 @@ let cow = {
   },
 };
 
+// let anotherInputMan = engine2.input.newManager();
+// let test = anotherInputMan.newMode('test');
+// anotherInputMan.setMode(test);
+// test.newKey('h', function(){console.log('h')});
+
 game1.frame = function(){
+  //anotherInputMan.update();
   cow.update();
   game1.update();
 };//game1.frame()
